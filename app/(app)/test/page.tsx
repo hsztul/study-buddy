@@ -154,6 +154,17 @@ export default function TestPage() {
       });
 
       setAttempts([...attempts, { wordId: currentWord.id, grade: data.grade }]);
+
+      // Refetch mastered count if the attempt was a pass
+      if (data.grade === "pass") {
+        const allWordsResponse = await fetch("/api/words");
+        if (allWordsResponse.ok) {
+          const allWordsData = await allWordsResponse.json();
+          const allWords = allWordsData.words || [];
+          const mastered = allWords.filter((w: Word) => w.lastResult === 'pass').length;
+          setMasteredCount(mastered);
+        }
+      }
     } catch (error) {
       console.error("Failed to process recording:", error);
       alert("Failed to process your recording. Please try again.");
