@@ -34,6 +34,9 @@ export class AudioRecorder {
         },
       });
 
+      // Store permission state for future visits (iOS Safari fallback)
+      AudioRecorder.storePermissionGranted();
+
       // Check for supported MIME types
       const mimeType = this.getSupportedMimeType();
 
@@ -167,8 +170,25 @@ export class AudioRecorder {
       return result.state;
     } catch {
       // Permissions API not supported (e.g., iOS Safari)
+      // Check localStorage for previously granted permission
+      const stored = localStorage.getItem("mic-permission-granted");
+      if (stored === "true") {
+        return "granted";
+      }
       // Return "prompt" to show explainer - we can't check without requesting
       return "prompt";
+    }
+  }
+
+  /**
+   * Store microphone permission state in localStorage
+   * Used as fallback for browsers that don't support Permissions API (e.g., iOS Safari)
+   */
+  static storePermissionGranted(): void {
+    try {
+      localStorage.setItem("mic-permission-granted", "true");
+    } catch (error) {
+      console.warn("Failed to store mic permission state:", error);
     }
   }
 

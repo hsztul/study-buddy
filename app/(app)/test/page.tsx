@@ -75,6 +75,9 @@ export default function TestPage() {
       // Clean up the stream immediately
       stream.getTracks().forEach((track) => track.stop());
       
+      // Store permission state for future visits (iOS Safari fallback)
+      AudioRecorder.storePermissionGranted();
+      
       setPermissionState("granted");
       setTestState("loading");
       loadWords();
