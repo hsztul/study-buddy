@@ -193,7 +193,6 @@ export default function ReviewPage() {
           {/* Header with Search */}
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1">
-              <h1 className="text-3xl font-bold">Review Mode</h1>
               <p className="mt-2 text-muted-foreground">
                 Flip cards to see definitions and add words to your test stack
               </p>
