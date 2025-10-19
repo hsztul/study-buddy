@@ -1,0 +1,52 @@
+{
+  "name": "StudyBuddy - SAT Vocabulary Trainer",
+  "short_name": "StudyBuddy",
+  "description": "Talk your way to SAT vocab mastery with voice-based testing and smart spaced repetition",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2563eb",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["education", "productivity"],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Review Words",
+      "short_name": "Review",
+      "description": "Review vocabulary with flashcards",
+      "url": "/review",
+      "icons": [
+        {
+          "src": "/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Test Mode",
+      "short_name": "Test",
+      "description": "Practice with voice testing",
+      "url": "/test",
+      "icons": [
+        {
+          "src": "/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ]
+}
