@@ -57,7 +57,7 @@ export async function updateUserWord(
       lastResult: grade,
       streak: newStreak,
       intervalDays: newInterval,
-      dueOn,
+      dueOn: dueOn.toISOString().split('T')[0], // Convert Date to YYYY-MM-DD string
     });
   } else {
     // Update existing record
@@ -90,7 +90,7 @@ export async function updateUserWord(
         lastResult: grade,
         streak: newStreak,
         intervalDays: newInterval,
-        dueOn,
+        dueOn: dueOn.toISOString().split('T')[0], // Convert Date to YYYY-MM-DD string
       })
       .where(and(eq(userWord.userId, userId), eq(userWord.wordId, wordId)));
   }

@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Mic, Brain, TrendingUp } from "lucide-react";
 
+export const dynamic = "force-dynamic";
+
 export default function LandingPage() {
   return (
     <div className="flex flex-col">

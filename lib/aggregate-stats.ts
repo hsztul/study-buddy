@@ -45,7 +45,7 @@ export async function aggregateDailyStats(userId: string, date: Date): Promise<v
     .insert(userDailyStats)
     .values({
       userId,
-      day: startOfDay,
+      day: startOfDay.toISOString().split('T')[0], // Convert Date to YYYY-MM-DD string
       attempts: total,
       passes,
       fails,
