@@ -66,8 +66,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider>
-      <html lang="en">
+    <ClerkProvider
+      appearance={{
+        layout: {
+          unsafe_disableDevelopmentModeWarnings: true,
+        },
+      }}
+    >
+      <html lang="en" suppressHydrationWarning>
         <head>
           {/* PWA Meta Tags */}
           <meta name="application-name" content="StudyBuddy" />
@@ -78,7 +84,9 @@ export default function RootLayout({
           <meta name="mobile-web-app-capable" content="yes" />
           <meta name="theme-color" content="#2563eb" />
         </head>
-        <body className={inter.className}>{children}</body>
+        <body className={inter.className} suppressHydrationWarning>
+          {children}
+        </body>
       </html>
     </ClerkProvider>
   );
