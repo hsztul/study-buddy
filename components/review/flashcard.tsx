@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useImperativeHandle, forwardRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -21,7 +21,11 @@ interface FlashcardProps {
   onFlip?: () => void;
 }
 
-export function Flashcard({ word, wordId, partOfSpeech, inTestQueue = false, onQueueUpdate, onFlip }: FlashcardProps) {
+export interface FlashcardRef {
+  flip: () => void;
+}
+
+export const Flashcard = forwardRef<FlashcardRef, FlashcardProps>(({ word, wordId, partOfSpeech, inTestQueue = false, onQueueUpdate, onFlip }, ref) => {
   const [isFlipped, setIsFlipped] = useState(false);
   const [definition, setDefinition] = useState<Definition | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -34,6 +38,11 @@ export function Flashcard({ word, wordId, partOfSpeech, inTestQueue = false, onQ
     setIsLoading(false);
     setError(null);
   }, [wordId]);
+
+  // Expose flip function to parent via ref
+  useImperativeHandle(ref, () => ({
+    flip: handleFlip,
+  }));
 
   const handleFlip = async () => {
     const newFlipState = !isFlipped;
@@ -77,7 +86,7 @@ export function Flashcard({ word, wordId, partOfSpeech, inTestQueue = false, onQ
         )}
         onClick={handleFlip}
       >
-        {/* Add to Test Queue Checkbox - Top Right */}
+        {/* Add to Test Stack Checkbox - Top Right */}
         <div 
           className="absolute top-4 right-4 z-10"
           onClick={(e) => e.stopPropagation()}
@@ -162,4 +171,6 @@ export function Flashcard({ word, wordId, partOfSpeech, inTestQueue = false, onQ
       </Card>
     </div>
   );
-}
+});
+
+Flashcard.displayName = "Flashcard";

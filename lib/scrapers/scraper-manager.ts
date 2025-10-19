@@ -2,7 +2,6 @@
  * Scraper Manager - Orchestrates multiple scrapers with fallback logic
  */
 
-import { FreeDictionaryAPI } from './free-dictionary-api';
 import { ExaScraper } from './exa-scraper';
 import type { IScraper, ScraperResult, ScrapedWord } from './scraper-types';
 
@@ -14,8 +13,7 @@ export class ScraperManager {
   constructor() {
     // Order matters - will try in sequence
     this.scrapers = [
-      new FreeDictionaryAPI(),  // Primary: Free, fast, reliable API
-      new ExaScraper(),         // Secondary: AI-powered search fallback
+      new ExaScraper(),  // Primary: AI-powered search with structured output
     ];
     this.cache = new Map();
   }

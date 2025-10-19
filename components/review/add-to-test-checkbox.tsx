@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Loader2 } from "lucide-react";
@@ -18,6 +18,11 @@ export function AddToTestCheckbox({
 }: AddToTestCheckboxProps) {
   const [checked, setChecked] = useState(initialChecked);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Sync state when initialChecked or wordId changes (navigating between cards)
+  useEffect(() => {
+    setChecked(initialChecked);
+  }, [initialChecked, wordId]);
 
   const handleToggle = async (newChecked: boolean) => {
     setIsLoading(true);
@@ -60,8 +65,10 @@ export function AddToTestCheckbox({
             <Loader2 className="h-3 w-3 animate-spin" />
             Updating...
           </span>
+        ) : checked ? (
+          "Added to test stack"
         ) : (
-          "Add to Test Queue"
+          "Add to test stack"
         )}
       </Label>
     </div>

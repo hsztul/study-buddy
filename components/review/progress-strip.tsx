@@ -23,7 +23,7 @@ export function ProgressStrip({ current, total, inQueue }: ProgressStripProps) {
           {current} of {total} mastered
         </span>
         <span className="font-medium text-foreground">
-          {inQueue} in test queue
+          {inQueue} in test stack
         </span>
       </div>
     </div>

@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { Flashcard } from "./flashcard";
+import { useState, useRef, useEffect, forwardRef, useImperativeHandle } from "react";
+import { Flashcard, FlashcardRef } from "./flashcard";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
@@ -17,9 +17,13 @@ interface FlashcardStackProps {
   onQueueUpdate?: () => void;
 }
 
+export interface FlashcardStackRef {
+  jumpToWord: (wordId: number) => void;
+}
+
 const STORAGE_KEY = "review-card-position";
 
-export function FlashcardStack({ words, onQueueUpdate }: FlashcardStackProps) {
+export const FlashcardStack = forwardRef<FlashcardStackRef, FlashcardStackProps>(({ words, onQueueUpdate }, ref) => {
   const [currentIndex, setCurrentIndex] = useState(() => {
     // Restore saved position on mount
     if (typeof window !== "undefined") {
@@ -38,6 +42,18 @@ export function FlashcardStack({ words, onQueueUpdate }: FlashcardStackProps) {
   const touchEndX = useRef<number>(0);
   const containerRef = useRef<HTMLDivElement>(null);
   const previousWordsLength = useRef(words.length);
+  const flashcardRef = useRef<FlashcardRef>(null);
+
+  // Expose jumpToWord method to parent
+  useImperativeHandle(ref, () => ({
+    jumpToWord: (wordId: number) => {
+      const index = words.findIndex((w) => w.id === wordId);
+      if (index !== -1) {
+        setCurrentIndex(index);
+        localStorage.setItem(STORAGE_KEY, index.toString());
+      }
+    },
+  }));
 
   if (words.length === 0) {
     return (
@@ -121,6 +137,9 @@ export function FlashcardStack({ words, onQueueUpdate }: FlashcardStackProps) {
         handlePrevious();
       } else if (e.key === "ArrowRight") {
         handleNext();
+      } else if (e.key === " " || e.key === "Spacebar") {
+        e.preventDefault(); // Prevent page scroll
+        flashcardRef.current?.flip();
       }
     };
 
@@ -139,6 +158,7 @@ export function FlashcardStack({ words, onQueueUpdate }: FlashcardStackProps) {
         onTouchEnd={handleTouchEnd}
       >
         <Flashcard
+          ref={flashcardRef}
           word={currentWord.term}
           wordId={currentWord.id}
           partOfSpeech={currentWord.partOfSpeech}
@@ -180,4 +200,6 @@ export function FlashcardStack({ words, onQueueUpdate }: FlashcardStackProps) {
       </div>
     </div>
   );
-}
+});
+
+FlashcardStack.displayName = "FlashcardStack";

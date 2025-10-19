@@ -1,8 +1,6 @@
 /**
  * Dictionary API client for fetching word definitions
- * Multi-tier caching: In-memory → Database → API
- * Primary: Free Dictionary API (dictionaryapi.dev - fast, free, no API key)
- * Fallback: Exa.ai (AI-powered search with structured output)
+ * Uses Exa.ai for AI-powered search with structured output
  */
 
 import { scraperManager } from './scrapers/scraper-manager';

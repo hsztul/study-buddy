@@ -234,7 +234,7 @@ export default function TestPage() {
           <p className="text-muted-foreground mb-8">
             {attempts.length > 0
               ? `You completed ${attempts.length} word${attempts.length > 1 ? "s" : ""} with ${Math.round((calculateAccuracy() || 0) * 100)}% accuracy.`
-              : "No words available in your test queue. Add some words from Review Mode!"}
+              : "No words available in your test stack. Add some words from Review Mode!"}
           </p>
           <div className="flex gap-4 justify-center">
             <button
