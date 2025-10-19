@@ -6,6 +6,7 @@ import { MicPermissionExplainer } from "@/components/test/mic-permission-explain
 import { MicPermissionDenied } from "@/components/test/mic-permission-denied";
 import { TestFlashcard, Grade } from "@/components/test/test-flashcard";
 import { SessionFooter } from "@/components/test/session-footer";
+import { TestProgressStrip } from "@/components/test/test-progress-strip";
 import { LandscapeSidebar } from "@/components/layout/landscape-sidebar";
 import { Spinner } from "@/components/ui/spinner";
 import { AudioRecorder } from "@/lib/audio-recorder";
@@ -16,6 +17,7 @@ type TestState = "permission" | "loading" | "testing" | "complete";
 interface Word {
   id: number;
   term: string;
+  lastResult?: string | null;
 }
 
 interface AttemptResult {
@@ -34,6 +36,8 @@ export default function TestPage() {
   const [result, setResult] = useState<AttemptResult | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [attempts, setAttempts] = useState<{ wordId: number; grade: Grade }[]>([]);
+  const [masteredCount, setMasteredCount] = useState(0);
+  const [totalWords, setTotalWords] = useState(0);
 
   // Check mic permission on mount
   useEffect(() => {
@@ -90,6 +94,16 @@ export default function TestPage() {
   const loadWords = async () => {
     setTestState("loading");
     try {
+      // Fetch all words to calculate mastered count
+      const allWordsResponse = await fetch("/api/words");
+      if (allWordsResponse.ok) {
+        const allWordsData = await allWordsResponse.json();
+        const allWords = allWordsData.words || [];
+        setTotalWords(allWords.length);
+        const mastered = allWords.filter((w: Word) => w.lastResult === 'pass').length;
+        setMasteredCount(mastered);
+      }
+
       // Fetch words from the test queue API (will be implemented in 0.10)
       // For now, use a placeholder
       const response = await fetch("/api/test/next?limit=20");
@@ -175,6 +189,10 @@ export default function TestPage() {
     return passes / attempts.length;
   };
 
+  const calculateCorrectCount = () => {
+    return attempts.filter((a) => a.grade === "pass").length;
+  };
+
   // Render permission states
   if (testState === "permission") {
     console.log("[Test] Rendering permission screen, state:", permissionState);
@@ -233,7 +251,24 @@ export default function TestPage() {
       {/* Desktop and Portrait Mobile Layout */}
       <div className="flex min-h-screen flex-col landscape:hidden landscape:md:flex">
         <div className="flex-1 container px-4 py-8 sm:px-6">
-          <div className="mx-auto max-w-2xl">
+          <div className="mx-auto max-w-2xl space-y-8">
+            {/* Header */}
+            <div>
+              <h1 className="text-3xl font-bold">Test Mode</h1>
+              <p className="mt-2 text-muted-foreground">
+                Define each word using your voice
+              </p>
+            </div>
+
+            {/* Progress Strip */}
+            <TestProgressStrip
+              masteredCount={masteredCount}
+              totalWords={totalWords}
+              correctCount={calculateCorrectCount()}
+              testedCount={attempts.length}
+            />
+
+            {/* Test Flashcard */}
             <TestFlashcard
               word={currentWord?.term || ""}
               onRecordingComplete={handleRecordingComplete}
