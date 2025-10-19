@@ -12,7 +12,7 @@ export default function LandingPage() {
         <div className="mx-auto max-w-4xl text-center">
           <Badge variant="secondary" className="mb-4 px-4 py-1.5 text-sm font-medium">
             <Sparkles className="mr-1.5 h-3.5 w-3.5" />
-            Mobile-First PWA • Voice-Powered Learning
+            Mobile-First • Voice-Powered Learning
           </Badge>
           
           <h1 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl lg:text-7xl">
@@ -185,10 +185,11 @@ export default function LandingPage() {
                 1
               </div>
               <div className="flex-1 pt-2">
-                <h3 className="text-2xl font-bold">Review with flashcards</h3>
+                <h3 className="text-2xl font-bold">Browse and pick your words</h3>
                 <p className="mt-3 text-lg text-muted-foreground leading-relaxed">
-                  Browse 384 SAT words with beautiful flashcards. Flip to see definitions, examples, and synonyms. 
-                  Mark the ones you want to test yourself on with a simple checkbox—build your personalized test queue.
+                  Swipe through 384 SAT vocabulary words like you're scrolling through social media. 
+                  Flip each card to see what it means, then check the box on words you want to practice. 
+                  It's that simple—build your own study list in minutes.
                 </p>
               </div>
             </div>
@@ -198,10 +199,11 @@ export default function LandingPage() {
                 2
               </div>
               <div className="flex-1 pt-2">
-                <h3 className="text-2xl font-bold">Speak the definition</h3>
+                <h3 className="text-2xl font-bold">Say it out loud</h3>
                 <p className="mt-3 text-lg text-muted-foreground leading-relaxed">
-                  Enter Test Mode and see a word. Tap the mic button and speak the definition in your own words. 
-                  Our AI transcribes your voice using OpenAI's Whisper—the most accurate speech recognition available.
+                  When you're ready to test yourself, just hit the mic button and explain the word in your own way. 
+                  No typing, no multiple choice—just talk naturally like you're explaining it to a friend. 
+                  The app listens and understands what you mean.
                 </p>
               </div>
             </div>
@@ -211,10 +213,11 @@ export default function LandingPage() {
                 3
               </div>
               <div className="flex-1 pt-2">
-                <h3 className="text-2xl font-bold">Get instant feedback</h3>
+                <h3 className="text-2xl font-bold">Learn from helpful feedback</h3>
                 <p className="mt-3 text-lg text-muted-foreground leading-relaxed">
-                  Receive a grade (Pass/Almost/Fail) in seconds with helpful tips and mnemonics to remember what you missed. 
-                  Words are automatically scheduled for review using smart spaced repetition—study less, remember more.
+                  Get instant results—did you nail it, almost get it, or need another try? 
+                  Plus, you'll get memory tricks and tips to help the word stick. 
+                  The app remembers which words you struggle with and brings them back at the perfect time.
                 </p>
               </div>
             </div>
