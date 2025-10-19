@@ -2,6 +2,8 @@ import Link from "next/link";
 import { SignInButton, SignUpButton } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
 
+export const dynamic = "force-dynamic";
+
 export default function MarketingLayout({
   children,
 }: {

@@ -9,6 +9,13 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "2mb",
+    },
+  },
+  // Ensure proper handling of client components
+  transpilePackages: ["@clerk/nextjs"],
 };
 
 export default nextConfig;
