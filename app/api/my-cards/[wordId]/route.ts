@@ -6,7 +6,7 @@ import { eq, and, sql } from "drizzle-orm";
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { wordId: string } }
+  { params }: { params: Promise<{ wordId: string }> }
 ) {
   try {
     const { userId } = await auth();
@@ -14,8 +14,9 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const wordId = parseInt(params.wordId);
-    if (isNaN(wordId)) {
+    const { wordId } = await params;
+    const wordIdNum = parseInt(wordId);
+    if (isNaN(wordIdNum)) {
       return NextResponse.json({ error: "Invalid word ID" }, { status: 400 });
     }
 
@@ -23,7 +24,7 @@ export async function DELETE(
     const attemptCount = await db
       .select({ count: sql<number>`count(*)::int` })
       .from(attempt)
-      .where(and(eq(attempt.userId, userId), eq(attempt.wordId, wordId)));
+      .where(and(eq(attempt.userId, userId), eq(attempt.wordId, wordIdNum)));
 
     if (attemptCount[0]?.count > 0) {
       return NextResponse.json(
@@ -40,7 +41,7 @@ export async function DELETE(
         firstReviewedAt: null,
         lastReviewedAt: null,
       })
-      .where(and(eq(userWord.userId, userId), eq(userWord.wordId, wordId)))
+      .where(and(eq(userWord.userId, userId), eq(userWord.wordId, wordIdNum)))
       .returning();
 
     if (updateResult.length === 0) {

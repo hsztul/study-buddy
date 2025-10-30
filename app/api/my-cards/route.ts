@@ -23,8 +23,56 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get("limit") || "20");
     const offset = (page - 1) * limit;
 
-    // Start with a simpler base query - only show reviewed or tested cards
-    let baseQuery = db
+    // Build the complete query with all conditions
+    const baseConditions = [
+      eq(userWord.userId, userId),
+      // Only show cards that have been reviewed OR have attempts
+      sql`(${userWord.hasReviewed} = true OR EXISTS (
+        SELECT 1 FROM ${attempt} 
+        WHERE ${attempt.userId} = ${userId} 
+        AND ${attempt.wordId} = ${userWord.wordId}
+      ))`
+    ];
+
+    // Apply search filter
+    if (search) {
+      baseConditions.push(ilike(word.term, `%${search}%`));
+    }
+
+    // Apply status filter
+    switch (filter) {
+      case "reviewed":
+        baseConditions.push(eq(userWord.hasReviewed, true));
+        break;
+      case "tested":
+        // Only show cards that have attempts (regardless of reviewed status)
+        baseConditions.push(sql`EXISTS (
+          SELECT 1 FROM ${attempt} 
+          WHERE ${attempt.userId} = ${userId} 
+          AND ${attempt.wordId} = ${userWord.wordId}
+        )`);
+        break;
+      case "correct":
+        baseConditions.push(eq(userWord.lastResult, "pass"));
+        break;
+      case "incorrect":
+        baseConditions.push(sql`${userWord.lastResult} IN ('fail', 'almost')`);
+        break;
+      // "all" now means reviewed OR tested (due to base query filter)
+    }
+
+    // Determine sorting
+    let orderByClause;
+    if (sort === "recently-reviewed") {
+      orderByClause = desc(userWord.lastReviewedAt);
+    } else if (sort === "alphabetical") {
+      orderByClause = asc(word.term);
+    } else {
+      orderByClause = desc(userWord.lastReviewedAt);
+    }
+
+    // Build the complete query
+    const baseQuery = db
       .select({
         id: word.id,
         term: word.term,
@@ -38,55 +86,8 @@ export async function GET(request: NextRequest) {
       })
       .from(userWord)
       .leftJoin(word, eq(userWord.wordId, word.id))
-      .where(and(
-        eq(userWord.userId, userId),
-        // Only show cards that have been reviewed OR have attempts
-        sql`(${userWord.hasReviewed} = true OR EXISTS (
-          SELECT 1 FROM ${attempt} 
-          WHERE ${attempt.userId} = ${userId} 
-          AND ${attempt.wordId} = ${userWord.wordId}
-        ))`
-      ));
-
-    // Apply search filter
-    if (search) {
-      baseQuery = baseQuery.where(ilike(word.term, `%${search}%`));
-    }
-
-    // Apply status filter
-    switch (filter) {
-      case "reviewed":
-        baseQuery = baseQuery.where(eq(userWord.hasReviewed, true));
-        break;
-      case "tested":
-        // Only show cards that have attempts (regardless of reviewed status)
-        baseQuery = baseQuery.where(sql`EXISTS (
-          SELECT 1 FROM ${attempt} 
-          WHERE ${attempt.userId} = ${userId} 
-          AND ${attempt.wordId} = ${userWord.wordId}
-        )`);
-        break;
-      case "correct":
-        baseQuery = baseQuery.where(eq(userWord.lastResult, "pass"));
-        break;
-      case "incorrect":
-        baseQuery = baseQuery.where(sql`${userWord.lastResult} IN ('fail', 'almost')`);
-        break;
-      // "all" now means reviewed OR tested (due to base query filter)
-    }
-
-    // Apply sorting
-    switch (sort) {
-      case "recently-reviewed":
-        baseQuery = baseQuery.orderBy(desc(userWord.lastReviewedAt));
-        break;
-      case "alphabetical":
-        baseQuery = baseQuery.orderBy(asc(word.term));
-        break;
-      default:
-        baseQuery = baseQuery.orderBy(desc(userWord.lastReviewedAt));
-        break;
-    }
+      .where(and(...baseConditions))
+      .orderBy(orderByClause);
 
     // Get the base cards
     const cards = await baseQuery.limit(limit).offset(offset);
@@ -103,7 +104,7 @@ export async function GET(request: NextRequest) {
             lastAttemptAt: sql<Date>`MAX(${attempt.createdAt})`.as("last_attempt_at"),
           })
           .from(attempt)
-          .where(and(eq(attempt.userId, userId), eq(attempt.wordId, card.id)))
+          .where(and(eq(attempt.userId, userId), eq(attempt.wordId, card.id!)))
           .groupBy(attempt.wordId);
 
         const stats = attemptStats[0] || {
