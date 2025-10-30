@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
     }
 
     const result = await generateSpeech({
-      model: openaiProvider.speech('tts-1'),
+      model: openaiProvider.speech('gpt-4o-mini-tts'),
       text: text.trim(),
       voice,
       ...(speed && speed !== 1.0 && { speed }),
