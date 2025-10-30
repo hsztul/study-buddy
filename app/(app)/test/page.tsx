@@ -38,11 +38,48 @@ export default function TestPage() {
   const [attempts, setAttempts] = useState<{ wordId: number; grade: Grade }[]>([]);
   const [masteredCount, setMasteredCount] = useState(0);
   const [totalWords, setTotalWords] = useState(0);
+  const [currentDefinition, setCurrentDefinition] = useState<string>("");
+  const [currentExample, setCurrentExample] = useState<string>("");
 
   // Check mic permission on mount
   useEffect(() => {
     checkMicPermission();
   }, []);
+
+  const fetchWordDefinition = async (wordId: number) => {
+    try {
+      const response = await fetch(`/api/words/${wordId}/definition`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.definitions && data.definitions.length > 0) {
+          const definition = data.definitions[0];
+          setCurrentDefinition(definition.definition || "");
+          setCurrentExample(definition.example || "");
+        } else {
+          setCurrentDefinition("");
+          setCurrentExample("");
+        }
+      } else {
+        setCurrentDefinition("");
+        setCurrentExample("");
+      }
+    } catch (error) {
+      console.error("Error fetching definition:", error);
+      setCurrentDefinition("");
+      setCurrentExample("");
+    }
+  };
+
+  // Fetch definition and example when current word changes
+  useEffect(() => {
+    const currentWord = words[currentIndex];
+    if (currentWord?.id) {
+      fetchWordDefinition(currentWord.id);
+    } else {
+      setCurrentDefinition("");
+      setCurrentExample("");
+    }
+  }, [currentIndex, words.length]);
 
   const checkMicPermission = async () => {
     const permission = await AudioRecorder.checkPermission();
@@ -193,6 +230,11 @@ export default function TestPage() {
     setIsProcessing(false);
   };
 
+  const handleBackToReview = (wordId: number) => {
+    // Navigate to review page with the specific word
+    router.push(`/review?wordId=${wordId}`);
+  };
+
   const handleEndSession = () => {
     router.push("/profile");
   };
@@ -284,12 +326,16 @@ export default function TestPage() {
             {/* Test Flashcard */}
             <TestFlashcard
               word={currentWord?.term || ""}
+              wordId={currentWord?.id || 0}
+              definition={currentDefinition}
+              example={currentExample}
               onRecordingComplete={handleRecordingComplete}
               disabled={isProcessing}
               isProcessing={isProcessing}
               result={result}
               onNext={handleNext}
               onRetry={handleRetryWord}
+              onBackToReview={handleBackToReview}
             />
           </div>
         </div>
@@ -311,12 +357,16 @@ export default function TestPage() {
             <div className="w-full max-w-2xl">
               <TestFlashcard
                 word={currentWord?.term || ""}
+                wordId={currentWord?.id || 0}
+                definition={currentDefinition}
+                example={currentExample}
                 onRecordingComplete={handleRecordingComplete}
                 disabled={isProcessing}
                 isProcessing={isProcessing}
                 result={result}
                 onNext={handleNext}
                 onRetry={handleRetryWord}
+                onBackToReview={handleBackToReview}
               />
             </div>
           </div>

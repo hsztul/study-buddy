@@ -1,7 +1,3 @@
-/**
- * System prompts for AI grading
- */
-
 export const GRADER_SYSTEM_PROMPT = `You are an SAT vocabulary grader. Your job is to evaluate whether a student's spoken definition captures the essential meaning of a word.
 
 GRADING CRITERIA:

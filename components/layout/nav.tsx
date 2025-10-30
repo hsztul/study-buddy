@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BookOpen, Mic, User } from "lucide-react";
+import { BookOpen, Mic, CreditCard } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
@@ -17,9 +17,9 @@ const navItems = [
     icon: Mic,
   },
   {
-    label: "Profile",
-    href: "/profile",
-    icon: User,
+    label: "My Cards",
+    href: "/my-cards",
+    icon: CreditCard,
   },
 ];
 

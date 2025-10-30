@@ -1,6 +1,6 @@
 /**
  * Dictionary API client for fetching word definitions
- * Uses Exa.ai for AI-powered search with structured output
+ * Uses gpt-5-nano LLM for AI-powered definitions with database caching
  */
 
 import { scraperManager } from './scrapers/scraper-manager';
@@ -42,7 +42,7 @@ const memoryCache = new Map<string, { data: DictionaryDefinition[]; timestamp: n
  * Fetch word definition with multi-tier caching
  * L1: In-memory cache (fastest)
  * L2: Database cache (persistent)
- * L3: API scrapers (fallback)
+ * L3: LLM scraper (fallback)
  */
 export async function fetchDefinition(
   word: string
@@ -81,11 +81,11 @@ export async function fetchDefinition(
     }
   } catch (error) {
     console.warn(`[Dictionary] DB cache check failed for "${normalizedWord}":`, error);
-    // Continue to API fetch on DB error
+    // Continue to LLM fetch on DB error
   }
 
-  // L3: Fetch from API scrapers
-  console.log(`[Dictionary] L3 (API) fetch for "${normalizedWord}"...`);
+  // L3: Fetch from LLM scraper
+  console.log(`[Dictionary] L3 (LLM) fetch for "${normalizedWord}"...`);
   const scrapedData = await scraperManager.fetchDefinition(normalizedWord);
   
   if (scrapedData) {
@@ -145,7 +145,7 @@ export async function saveDefinitionsToDb(
           synonyms: def.synonyms && def.synonyms.length > 0 ? JSON.stringify(def.synonyms) : null,
           antonyms: def.antonyms && def.antonyms.length > 0 ? JSON.stringify(def.antonyms) : null,
           rank,
-          source: scrapedData.source,
+          source: scrapedData.source || 'llm-gpt-5-nano',
         });
         rank++;
       }

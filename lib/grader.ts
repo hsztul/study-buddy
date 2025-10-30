@@ -1,7 +1,12 @@
 import { generateObject } from "ai";
-import { openai } from "@ai-sdk/openai";
+import { openai, createOpenAI } from "@ai-sdk/openai";
 import { z } from "zod";
-import { GRADER_SYSTEM_PROMPT, createGraderPrompt } from "./prompts";
+import { GRADER_SYSTEM_PROMPT, createGraderPrompt } from "./prompts/grader-prompt";
+
+// Create OpenAI provider with API key
+const openaiProvider = createOpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
 
 /**
  * Grading result schema
@@ -37,7 +42,7 @@ export async function gradeDefinition(
 
     // Use Vercel AI SDK with gpt-5-nano and structured output
     const result = await generateObject({
-      model: openai("gpt-5-nano"),
+      model: openaiProvider("gpt-5-nano"),
       system: GRADER_SYSTEM_PROMPT,
       prompt: createGraderPrompt(word, canonicalDefinition, transcript),
       schema: GradeResultSchema,

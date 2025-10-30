@@ -1,25 +1,23 @@
 /**
- * Scraper Manager - Orchestrates multiple scrapers with fallback logic
+ * Scraper Manager - Orchestrates LLM-based definition fetching
  */
 
-import { ExaScraper } from './exa-scraper';
+import { LLMLLMScraper } from './llm-scraper';
 import type { IScraper, ScraperResult, ScrapedWord } from './scraper-types';
 
 export class ScraperManager {
-  private scrapers: IScraper[];
+  private scraper: LLMLLMScraper;
   private cache: Map<string, { data: ScrapedWord; timestamp: number }>;
-  private cacheDuration = 7 * 24 * 60 * 60 * 1000; // 7 days (scraped data is stable)
+  private cacheDuration = 7 * 24 * 60 * 60 * 1000; // 7 days (definitions are stable)
 
   constructor() {
-    // Order matters - will try in sequence
-    this.scrapers = [
-      new ExaScraper(),  // Primary: AI-powered search with structured output
-    ];
+    // Use only LLM scraper for consistent, high-quality definitions
+    this.scraper = new LLMLLMScraper();
     this.cache = new Map();
   }
 
   /**
-   * Fetch definition using available scrapers with fallback logic
+   * Fetch definition using LLM scraper
    */
   async fetchDefinition(word: string): Promise<ScrapedWord | null> {
     const normalizedWord = word.toLowerCase().trim();
@@ -31,35 +29,28 @@ export class ScraperManager {
       return cached.data;
     }
 
-    // Try each scraper in sequence
-    for (const scraper of this.scrapers) {
-      try {
-        console.log(`[ScraperManager] Trying ${scraper.name} for "${normalizedWord}"...`);
-        const result = await scraper.scrape(normalizedWord);
+    // Use LLM scraper
+    try {
+      console.log(`[ScraperManager] Using LLM scraper for "${normalizedWord}"...`);
+      const result = await this.scraper.scrape(normalizedWord);
 
-        if (result.success && result.data) {
-          // Cache successful result
-          this.cache.set(normalizedWord, {
-            data: result.data,
-            timestamp: Date.now(),
-          });
-          console.log(`[ScraperManager] ✓ Success with ${scraper.name}`);
-          return result.data;
-        }
-
-        console.log(`[ScraperManager] ✗ ${scraper.name} failed: ${result.error}`);
-      } catch (error) {
-        const errorMsg = error instanceof Error ? error.message : String(error);
-        console.error(`[ScraperManager] ✗ ${scraper.name} error:`, errorMsg);
+      if (result.success && result.data) {
+        // Cache successful result
+        this.cache.set(normalizedWord, {
+          data: result.data,
+          timestamp: Date.now(),
+        });
+        console.log(`[ScraperManager] ✓ Success with LLM scraper`);
+        return result.data;
       }
 
-      // Small delay before trying next scraper
-      if (this.scrapers.indexOf(scraper) < this.scrapers.length - 1) {
-        await new Promise(resolve => setTimeout(resolve, 500));
-      }
+      console.log(`[ScraperManager] ✗ LLM scraper failed: ${result.error}`);
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      console.error(`[ScraperManager] ✗ LLM scraper error:`, errorMsg);
     }
 
-    console.warn(`[ScraperManager] All scrapers failed for "${normalizedWord}"`);
+    console.warn(`[ScraperManager] LLM scraper failed for "${normalizedWord}"`);
     return null;
   }
 
@@ -82,7 +73,7 @@ export class ScraperManager {
    * Get available scraper names
    */
   getScraperNames(): string[] {
-    return this.scrapers.map(s => s.name);
+    return [this.scraper.name];
   }
 }
 

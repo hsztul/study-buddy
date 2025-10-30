@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AddToTestCheckbox } from "./add-to-test-checkbox";
+import { SpeechButton } from "@/components/ui/speech-button";
 
 interface Definition {
   definition: string;
@@ -49,6 +50,22 @@ export const Flashcard = forwardRef<FlashcardRef, FlashcardProps>(({ word, wordI
     setIsFlipped(newFlipState);
     onFlip?.();
 
+    // Mark as reviewed when flipping to back for the first time
+    if (newFlipState && !isFlipped) {
+      try {
+        await fetch("/api/review/mark", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ wordId }),
+        });
+      } catch (error) {
+        console.error("Error marking card as reviewed:", error);
+        // Don't show error to user, just log it
+      }
+    }
+
     // Fetch definition when flipping to back (if not already loaded)
     if (newFlipState && !definition && !isLoading) {
       setIsLoading(true);
@@ -88,7 +105,10 @@ export const Flashcard = forwardRef<FlashcardRef, FlashcardProps>(({ word, wordI
       >
         {/* Add to Test Stack Checkbox - Top Right */}
         <div 
-          className="absolute top-4 right-4 z-10"
+          className={cn(
+            "absolute top-4 right-4 z-10 transition-transform duration-500",
+            isFlipped && "rotate-y-180"
+          )}
           onClick={(e) => e.stopPropagation()}
         >
           <AddToTestCheckbox
@@ -104,12 +124,21 @@ export const Flashcard = forwardRef<FlashcardRef, FlashcardProps>(({ word, wordI
             isFlipped && "invisible"
           )}
         >
-          <h2 className="text-4xl font-bold text-center sm:text-5xl">{word}</h2>
-          {partOfSpeech && (
-            <p className="mt-4 text-sm text-muted-foreground italic">
-              {partOfSpeech}
-            </p>
-          )}
+          <div className="flex flex-col items-center gap-4">
+            <div className="flex items-center gap-3">
+              <h2 className="text-4xl font-bold text-center sm:text-5xl">{word}</h2>
+              <SpeechButton 
+                text={word} 
+                voice="alloy"
+                size="sm"
+              />
+            </div>
+            {partOfSpeech && (
+              <p className="text-sm text-muted-foreground italic">
+                {partOfSpeech}
+              </p>
+            )}
+          </div>
           <p className="mt-8 text-sm text-muted-foreground">
             Tap to see definition
           </p>
@@ -152,7 +181,15 @@ export const Flashcard = forwardRef<FlashcardRef, FlashcardProps>(({ word, wordI
                   {definition.partOfSpeech}
                 </p>
               )}
-              <p className="text-lg leading-relaxed">{definition.definition}</p>
+              <div className="flex items-center justify-center gap-2">
+                <p className="text-lg leading-relaxed">{definition.definition}</p>
+                <SpeechButton
+                  text={`${definition.definition}${definition.example ? `. Example: ${definition.example}` : ''}`}
+                  voice="alloy"
+                  size="sm"
+                  title="Hear definition and example"
+                />
+              </div>
               {definition.example && (
                 <div className="mt-4 border-l-4 border-muted pl-4">
                   <p className="text-sm italic text-muted-foreground">

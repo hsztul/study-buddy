@@ -18,16 +18,18 @@ export function Header() {
           <Nav />
         </div>
 
-        {/* User Avatar */}
+        {/* User Avatar - Clickable to Profile */}
         <div className="flex items-center">
-          <UserButton
-            afterSignOutUrl="/"
-            appearance={{
-              elements: {
-                avatarBox: "h-9 w-9",
-              },
-            }}
-          />
+          <Link href="/profile">
+            <UserButton
+              afterSignOutUrl="/"
+              appearance={{
+                elements: {
+                  avatarBox: "h-9 w-9 cursor-pointer hover:opacity-80 transition-opacity",
+                },
+              }}
+            />
+          </Link>
         </div>
       </div>
 

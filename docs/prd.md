@@ -66,10 +66,11 @@
   * I can long-press or tap to hear the **correct definition** (TTS optional Phase 2).
   * If Whisper fails/low-confidence, I get a clean retry with guidance.
 
-* **Stats & Profile**
+* **My Cards & Profile**
 
-  * As a user, I can view per-word accuracy, last tested date, attempts, and SR-due list.
-  * I can sign out, manage my display name, and see account email.
+  * As a user, I can view all cards I've reviewed or tested on in "My Cards" with search and filter options.
+  * I can remove cards from my reviewed list (but not tested cards).
+  * I can access my Profile by clicking my avatar to see stats and account settings.
 
 ---
 
@@ -83,7 +84,7 @@
 
 * **Portrait (primary):**
 
-  * **Header:** App name/logo, nav (Review, Test, Profile), user avatar (Clerk).
+  * **Header:** App name/logo, nav (Review, Test, My Cards), user avatar (Clerk - links to Profile).
   * **Main:** Progress strip (position in deck / due words), mode toggle (Review/Test), card stack.
 * **Desktop:** Two-column: left = card; right = tips, stats, queue list.
 
@@ -117,6 +118,14 @@
 ### Permission UX
 
 * Before calling `getUserMedia`, show inline sheet: why mic is needed, privacy statement, a preview of what happens, then “Continue”. If denied, show retry instructions with browser-specific help.
+
+### My Cards Screen
+
+* Search bar to filter through reviewed and tested cards.
+* Card list with status indicators: Reviewed (flipped), Tested (right/wrong), and test count.
+* Filter options: All | Reviewed Only | Tested Only | Correct Only | Incorrect Only.
+* Remove button for reviewed cards (tested cards cannot be removed).
+* Sort options: Recently reviewed | Recently tested | Alphabetical | Accuracy.
 
 ### Profile
 
@@ -195,6 +204,9 @@ CREATE TABLE user_word (
   stability REAL,                      -- reserved for FSRS
   last_result TEXT,                    -- 'pass'|'fail'|'almost'
   streak INT DEFAULT 0,
+  has_reviewed BOOLEAN DEFAULT FALSE,  -- user has flipped the card
+  first_reviewed_at TIMESTAMPTZ,       -- when card was first flipped
+  last_reviewed_at TIMESTAMPTZ,        -- when card was last flipped
   PRIMARY KEY (user_id, word_id)
 );
 
@@ -263,9 +275,13 @@ CREATE TABLE user_daily_stats (
   * **Multipart**: audio blob (webm/ogg) + `{ wordId }`
   * Server flow: Whisper STT → grade (gpt-5-nano) → compute tip → persist Attempt → update `user_word` SR fields → return `{ grade, score, feedback, latencyMs }`.
 
-* `GET /api/stats/overview`
+* `GET /api/my-cards?search=…&filter=…&sort=…`
 
-  * Aggregates for profile tiles + chart data.
+  * Returns user's reviewed and tested cards with search and pagination.
+
+* `DELETE /api/my-cards/[wordId]`
+
+  * Removes a card from reviewed list (only if not tested).
 
 ---
 
@@ -336,6 +352,10 @@ Selection for `/api/test/next`:
   * `<TestCard />` (word, controls)
   * `<ResultPanel />` (pass/almost/fail UI, tips)
   * `<SessionFooter />`
+* `app/(app)/my-cards/page.tsx`
+
+  * `<SearchBar />`, `<FilterSort />`, `<CardList />`
+  * `<CardItem />` with remove button (reviewed only)
 * `app/(app)/profile/page.tsx`
 
   * `<StatsTiles />`, `<AccuracyChart />`, `<DueList />`

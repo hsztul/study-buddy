@@ -28,7 +28,7 @@ export const definition = pgTable("definition", {
   synonyms: text("synonyms"), // JSON array stored as text
   antonyms: text("antonyms"), // JSON array stored as text
   rank: smallint("rank").notNull().default(1), // 1 = primary, 2+ = alternates
-  source: text("source").notNull().default("free-dictionary-api"), // 'free-dictionary-api' | 'exa' | etc
+  source: text("source").notNull().default("llm-gpt-5-nano"), // 'llm-gpt-5-nano' | 'free-dictionary-api' | 'exa' | etc
   cachedAt: timestamp("cached_at").defaultNow().notNull(),
 }, (table) => ({
   wordIdRankIdx: index("definition_word_id_rank_idx").on(table.wordId, table.rank),
@@ -45,9 +45,13 @@ export const userWord = pgTable("user_word", {
   stability: real("stability"), // Reserved for FSRS
   lastResult: text("last_result"), // 'pass' | 'fail' | 'almost'
   streak: integer("streak").default(0),
+  hasReviewed: boolean("has_reviewed").default(false), // user has flipped the card
+  firstReviewedAt: timestamp("first_reviewed_at"), // when card was first flipped
+  lastReviewedAt: timestamp("last_reviewed_at"), // when card was last flipped
 }, (table) => ({
   pk: primaryKey({ columns: [table.userId, table.wordId] }),
   userIdDueOnIdx: index("user_word_user_id_due_on_idx").on(table.userId, table.dueOn),
+  userIdHasReviewedIdx: index("user_word_user_id_has_reviewed_idx").on(table.userId, table.hasReviewed),
 }));
 
 // Individual test attempts

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
+import { useSearchParams } from "next/navigation";
 import { FlashcardStack, FlashcardStackRef } from "@/components/review/flashcard-stack";
 import { ProgressStrip } from "@/components/review/progress-strip";
 import { LandscapeSidebar } from "@/components/layout/landscape-sidebar";
@@ -17,6 +18,7 @@ interface Word {
 }
 
 export default function ReviewPage() {
+  const searchParams = useSearchParams();
   const [words, setWords] = useState<Word[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -67,6 +69,19 @@ export default function ReviewPage() {
       setMasteredCount(mastered);
       
       setIsLoading(false);
+
+      // Check if we need to jump to a specific word (from test mode)
+      const wordIdParam = searchParams.get('wordId');
+      if (wordIdParam && firstChunk.length > 0) {
+        const targetWordId = parseInt(wordIdParam, 10);
+        const wordIndex = firstChunk.findIndex((w: Word) => w.id === targetWordId);
+        if (wordIndex !== -1) {
+          // Set initial index to the target word
+          setTimeout(() => {
+            flashcardStackRef.current?.jumpToWord(targetWordId);
+          }, 100);
+        }
+      }
 
       // Load remaining words in the background if there are more
       if (data.hasMore && data.nextCursor !== null) {

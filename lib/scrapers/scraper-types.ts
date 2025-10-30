@@ -18,7 +18,7 @@ export interface ScrapedWord {
   word: string;
   phonetic?: string;
   meanings: ScrapedMeaning[];
-  source: 'exa' | 'free-dictionary-api' | 'wiktionary' | 'duckduckgo' | 'google' | 'dictionary.com';
+  source: 'exa' | 'free-dictionary-api' | 'wiktionary' | 'duckduckgo' | 'google' | 'dictionary.com' | 'llm-gpt-5-nano';
 }
 
 export interface ScraperResult {

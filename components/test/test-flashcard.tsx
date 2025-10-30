@@ -2,16 +2,20 @@
 
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { CheckCircle2, AlertCircle, XCircle } from "lucide-react";
+import { CheckCircle2, AlertCircle, XCircle, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { Recorder } from "./recorder";
+import { SpeechButton } from "@/components/ui/speech-button";
 import { cn } from "@/lib/utils";
 
 export type Grade = "pass" | "almost" | "fail";
 
 interface TestFlashcardProps {
   word: string;
+  wordId: number; // Add wordId prop
+  definition?: string; // Add definition prop
+  example?: string; // Add example prop
   onRecordingComplete: (audioBlob: Blob) => void;
   disabled?: boolean;
   isProcessing?: boolean;
@@ -23,16 +27,21 @@ interface TestFlashcardProps {
   } | null;
   onNext: () => void;
   onRetry: () => void;
+  onBackToReview: (wordId: number) => void; // Add back to review callback
 }
 
 export function TestFlashcard({
   word,
+  wordId,
+  definition,
+  example,
   onRecordingComplete,
   disabled,
   isProcessing,
   result,
   onNext,
   onRetry,
+  onBackToReview,
 }: TestFlashcardProps) {
   const [isFlipped, setIsFlipped] = useState(false);
 
@@ -109,9 +118,16 @@ export function TestFlashcard({
                 <p className="mb-2 text-sm font-medium text-muted-foreground">
                   Define this word:
                 </p>
-                <h2 className="text-4xl font-bold tracking-tight sm:text-5xl">
-                  {word}
-                </h2>
+                <div className="flex items-center justify-center gap-3">
+                  <h2 className="text-4xl font-bold tracking-tight sm:text-5xl">
+                    {word}
+                  </h2>
+                  <SpeechButton 
+                    text={word} 
+                    voice="alloy"
+                    className="mt-1"
+                  />
+                </div>
               </div>
 
               {/* Recorder */}
@@ -121,6 +137,20 @@ export function TestFlashcard({
                   disabled={disabled}
                 />
               </div>
+
+              {/* Bottom right button */}
+              <div className="flex justify-end">
+                <Button
+                  onClick={() => onBackToReview(wordId)}
+                  variant="outline"
+                  size="sm"
+                  className="text-xs px-2 py-1 h-7"
+                  title="Go back to review this word"
+                >
+                  <BookOpen className="h-3 w-3 mr-1" />
+                  Review
+                </Button>
+              </div>
             </div>
           )}
         </CardContent>
@@ -128,7 +158,7 @@ export function TestFlashcard({
         {/* Back Side - Result */}
         <CardContent
           className={cn(
-            "absolute inset-0 flex flex-col items-center justify-center p-6 backface-hidden rotate-y-180",
+            "absolute inset-0 flex flex-col items-center justify-center p-4 backface-hidden rotate-y-180",
             !isFlipped && "invisible"
           )}
         >
@@ -140,27 +170,89 @@ export function TestFlashcard({
 
                 return (
                   <div
-                    className={`flex-1 rounded-lg p-6 ${config.bgColor} border-2 ${config.borderColor} flex flex-col`}
+                    className={`flex-1 rounded-lg p-4 ${config.bgColor} border-2 ${config.borderColor} flex flex-col`}
                   >
-                    <div className="space-y-4 flex-1">
-                      {/* Grade indicator */}
-                      <div className="flex items-center gap-3">
-                        <Icon className={`h-8 w-8 ${config.iconColor}`} />
-                        <div>
-                          <h3 className="text-xl font-bold">{config.title}</h3>
-                          {result.score !== undefined && (
-                            <p className="text-sm text-muted-foreground">
-                              Score: {Math.round(result.score * 100)}%
-                            </p>
+                    <div className="flex-1 flex flex-col">
+                      {/* Grade indicator and actions */}
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-center gap-2">
+                          <Icon className={`h-6 w-6 ${config.iconColor}`} />
+                          <div>
+                            <h3 className="text-lg font-semibold">{config.title}</h3>
+                            {result.score !== undefined && (
+                              <p className="text-xs text-muted-foreground">
+                                Score: {Math.round(result.score * 100)}%
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 ml-auto">
+                          <Button
+                            onClick={() => onBackToReview(wordId)}
+                            variant="outline"
+                            size="sm"
+                            title="Go back to review this word"
+                          >
+                            <BookOpen className="h-4 w-4 mr-1" />
+                            Review
+                          </Button>
+                          {result.grade === "pass" ? (
+                            <Button onClick={onNext} size="sm">
+                              Next Word
+                            </Button>
+                          ) : (
+                            <>
+                              <Button
+                                onClick={onRetry}
+                                variant="outline"
+                                size="sm"
+                              >
+                                Try Again
+                              </Button>
+                              <Button onClick={onNext} size="sm">
+                                Next Word
+                              </Button>
+                            </>
                           )}
                         </div>
                       </div>
 
+                      {/* Scrollable body */}
+                      <div className="mt-2 space-y-2 overflow-y-auto pr-1">
+
+                      {/* Definition and example */}
+                      {definition && (
+                        <div className="rounded-lg bg-white p-2">
+                          <div className="flex items-center justify-between mb-2">
+                            <p className="text-xs font-medium text-muted-foreground">
+                              Definition:
+                            </p>
+                            <SpeechButton
+                              text={`${definition}${example ? `. Example: ${example}` : ''}`}
+                              voice="alloy"
+                              size="sm"
+                              title="Hear definition and example"
+                            />
+                          </div>
+                          <p className="text-sm leading-relaxed">{definition}</p>
+                          {example && (
+                            <div className="mt-1 border-l-4 border-muted pl-3">
+                              <p className="text-xs font-medium text-muted-foreground mb-1">
+                                Example:
+                              </p>
+                              <p className="text-sm italic text-muted-foreground">
+                                "{example}"
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
                       {/* Message */}
-                      <p className="text-sm">{config.message}</p>
+                      <p className="text-xs">{config.message}</p>
 
                       {/* Transcript */}
-                      <div className="rounded-lg bg-white p-3">
+                      <div className="rounded-lg bg-white p-2">
                         <p className="text-xs font-medium text-muted-foreground mb-1">
                           You said:
                         </p>
@@ -171,36 +263,14 @@ export function TestFlashcard({
 
                       {/* Feedback */}
                       {result.feedback && (
-                        <div className="rounded-lg bg-white p-3">
+                        <div className="rounded-lg bg-white p-2">
                           <p className="text-xs font-medium text-muted-foreground mb-1">
                             Tip:
                           </p>
                           <p className="text-sm">{result.feedback}</p>
                         </div>
                       )}
-                    </div>
-
-                    {/* Actions */}
-                    <div className="flex gap-3 pt-4">
-                      {result.grade === "pass" ? (
-                        <Button onClick={onNext} className="flex-1" size="lg">
-                          Next Word
-                        </Button>
-                      ) : (
-                        <>
-                          <Button
-                            onClick={onRetry}
-                            variant="outline"
-                            className="flex-1"
-                            size="lg"
-                          >
-                            Try Again
-                          </Button>
-                          <Button onClick={onNext} className="flex-1" size="lg">
-                            Next Word
-                          </Button>
-                        </>
-                      )}
+                      </div>
                     </div>
                   </div>
                 );
