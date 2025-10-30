@@ -91,7 +91,8 @@ export function TestFlashcard({
     <div className="perspective-1000 w-full">
       <Card
         className={cn(
-          "relative h-[400px] transition-transform duration-500 transform-style-3d",
+          "relative transition-transform duration-500 transform-style-3d",
+          isFlipped ? "min-h-[400px]" : "h-[400px]",
           isFlipped && "rotate-y-180"
         )}
       >
@@ -158,21 +159,22 @@ export function TestFlashcard({
         {/* Back Side - Result */}
         <CardContent
           className={cn(
-            "absolute inset-0 flex flex-col items-center justify-center p-4 backface-hidden rotate-y-180",
-            !isFlipped && "invisible"
+            "flex flex-col items-center justify-center p-4 backface-hidden rotate-y-180",
+            !isFlipped && "invisible",
+            isFlipped ? "relative" : "absolute inset-0"
           )}
         >
           {result && (
-            <div className="w-full h-full flex flex-col">
+            <div className="w-full flex flex-col">
               {(() => {
                 const config = getGradeConfig(result.grade);
                 const Icon = config.icon;
 
                 return (
                   <div
-                    className={`flex-1 rounded-lg p-4 ${config.bgColor} border-2 ${config.borderColor} flex flex-col`}
+                    className={`rounded-lg p-4 ${config.bgColor} border-2 ${config.borderColor} flex flex-col`}
                   >
-                    <div className="flex-1 flex flex-col">
+                    <div className="flex flex-col">
                       {/* Grade indicator and actions */}
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex items-center gap-2">
@@ -201,24 +203,19 @@ export function TestFlashcard({
                               Next Word
                             </Button>
                           ) : (
-                            <>
-                              <Button
-                                onClick={onRetry}
-                                variant="outline"
-                                size="sm"
-                              >
-                                Try Again
-                              </Button>
-                              <Button onClick={onNext} size="sm">
-                                Next Word
-                              </Button>
-                            </>
+                            <Button
+                              onClick={onRetry}
+                              variant="outline"
+                              size="sm"
+                            >
+                              Try Again
+                            </Button>
                           )}
                         </div>
                       </div>
 
                       {/* Scrollable body */}
-                      <div className="mt-2 space-y-2 overflow-y-auto pr-1">
+                      <div className="mt-2 space-y-2 overflow-y-auto pr-1 max-h-[60vh]">
 
                       {/* Definition and example */}
                       {definition && (
