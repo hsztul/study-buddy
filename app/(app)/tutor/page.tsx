@@ -45,7 +45,7 @@ export default function TutorPage() {
       // Create a RealtimeSession with the agent
       // The session handles the WebRTC connection, audio processing, and conversation lifecycle
       const session = new RealtimeSession(agent, {
-        model: "gpt-realtime",
+        model: "gpt-realtime-mini",
       });
       sessionRef.current = session;
 
