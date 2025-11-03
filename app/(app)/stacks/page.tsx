@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, BookOpen, Clock, TrendingUp, Shield, Trash2, Lock } from "lucide-react";
+import { Plus, BookOpen, Clock, TrendingUp, Shield, Trash2, Lock, Edit } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -151,7 +151,7 @@ export default function MyStacksPage() {
               onClick={() => router.push(`/stacks/${stack.id}/${getStackUrlName(stack.name)}/review`)}
             >
               <CardHeader>
-                <div className="flex items-start justify-between">
+                <div className="flex items-center justify-between">
                   <div className="flex-1">
                     <CardTitle className="flex items-center gap-2">
                       {stack.name}
@@ -163,17 +163,30 @@ export default function MyStacksPage() {
                     </CardTitle>
                   </div>
                   {!stack.isProtected && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeleteStack(stack.id, stack.name);
-                      }}
-                      className="opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <Trash2 className="w-4 h-4 text-destructive" />
-                    </Button>
+                    <div className="flex gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          router.push(`/stacks/${stack.id}/edit`);
+                        }}
+                        className="opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <Edit className="w-4 h-4 text-muted-foreground" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteStack(stack.id, stack.name);
+                        }}
+                        className="opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <Trash2 className="w-4 h-4 text-destructive" />
+                      </Button>
+                    </div>
                   )}
                 </div>
               </CardHeader>

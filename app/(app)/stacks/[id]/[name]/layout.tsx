@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, usePathname, useRouter } from "next/navigation";
-import { ArrowLeft, BookOpen, Mic, MessageSquare, BarChart3, Shield } from "lucide-react";
+import { ArrowLeft, BookOpen, Mic, MessageSquare, BarChart3, Shield, Edit } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
@@ -108,6 +108,19 @@ export default function StackLayout({ children }: { children: React.ReactNode })
                   </Badge>
                 )}
               </h1>
+              
+              {/* Edit Button */}
+              {!stack.isProtected && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => router.push(`/stacks/${stackId}/edit`)}
+                  className="gap-2"
+                >
+                  <Edit className="w-4 h-4" />
+                  Edit
+                </Button>
+              )}
             </div>
 
             {/* Tabs */}
@@ -134,24 +147,38 @@ export default function StackLayout({ children }: { children: React.ReactNode })
           {/* Mobile Layout - Stacked */}
           <div className="md:hidden">
             {/* Top row with back button and stack name */}
-            <div className="flex items-center gap-3 mb-4">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => router.push("/stacks")}
-                className="gap-2 p-2"
-              >
-                <ArrowLeft className="w-4 h-4" />
-              </Button>
-              <h1 className="text-xl font-bold flex items-center gap-2">
-                {stack.name}
-                {stack.isProtected && (
-                  <Badge variant="secondary" className="text-xs">
-                    <Shield className="w-3 h-3 mr-1" />
-                    Protected
-                  </Badge>
-                )}
-              </h1>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => router.push("/stacks")}
+                  className="gap-2 p-2"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                </Button>
+                <h1 className="text-xl font-bold flex items-center gap-2">
+                  {stack.name}
+                  {stack.isProtected && (
+                    <Badge variant="secondary" className="text-xs">
+                      <Shield className="w-3 h-3 mr-1" />
+                      Protected
+                    </Badge>
+                  )}
+                </h1>
+              </div>
+              
+              {/* Edit Button */}
+              {!stack.isProtected && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => router.push(`/stacks/${stackId}/edit`)}
+                  className="gap-2 p-2"
+                >
+                  <Edit className="w-4 h-4" />
+                </Button>
+              )}
             </div>
           </div>
         </div>
