@@ -45,13 +45,14 @@ export async function aggregateDailyStats(userId: string, date: Date): Promise<v
     .insert(userDailyStats)
     .values({
       userId,
+      stackId: 0, // 0 represents all stacks aggregated
       day: startOfDay.toISOString().split('T')[0], // Convert Date to YYYY-MM-DD string
       attempts: total,
       passes,
       fails,
     })
     .onConflictDoUpdate({
-      target: [userDailyStats.userId, userDailyStats.day],
+      target: [userDailyStats.userId, userDailyStats.stackId, userDailyStats.day],
       set: {
         attempts: total,
         passes,

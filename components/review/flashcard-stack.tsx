@@ -10,11 +10,15 @@ interface Word {
   term: string;
   partOfSpeech?: string | null;
   inTestQueue?: boolean | null;
+  definition?: string;
 }
 
 interface FlashcardStackProps {
   words: Word[];
-  onQueueUpdate?: () => void;
+  stackId?: number;
+  queueCount?: number;
+  onQueueUpdate?: (wordId: number, inQueue: boolean) => void;
+  onReviewUpdate?: (wordId: number) => void;
 }
 
 export interface FlashcardStackRef {
@@ -23,7 +27,7 @@ export interface FlashcardStackRef {
 
 const STORAGE_KEY = "review-card-position";
 
-export const FlashcardStack = forwardRef<FlashcardStackRef, FlashcardStackProps>(({ words, onQueueUpdate }, ref) => {
+export const FlashcardStack = forwardRef<FlashcardStackRef, FlashcardStackProps>(({ words, stackId, queueCount = 0, onQueueUpdate, onReviewUpdate }, ref) => {
   const [currentIndex, setCurrentIndex] = useState(() => {
     // Restore saved position on mount
     if (typeof window !== "undefined") {
@@ -163,33 +167,43 @@ export const FlashcardStack = forwardRef<FlashcardStackRef, FlashcardStackProps>
           wordId={currentWord.id}
           partOfSpeech={currentWord.partOfSpeech}
           inTestQueue={currentWord.inTestQueue || false}
+          stackId={stackId}
+          definition={currentWord.definition}
           onQueueUpdate={onQueueUpdate}
+          onReviewUpdate={onReviewUpdate}
         />
       </div>
 
       {/* Controls - hidden in landscape mobile only */}
-      <div className="flex items-center justify-center gap-2 landscape:hidden landscape:md:flex">
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={handlePrevious}
-          disabled={!canGoPrevious}
-        >
-          <ChevronLeft className="h-4 w-4" />
-        </Button>
+      <div className="flex flex-col items-center landscape:hidden landscape:md:flex">
+        <div className="flex items-center justify-center gap-2">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={handlePrevious}
+            disabled={!canGoPrevious}
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
 
-        <span className="min-w-[100px] text-center text-sm text-muted-foreground">
-          {currentIndex + 1} / {words.length}
-        </span>
+          <span className="min-w-[100px] text-center text-sm text-muted-foreground">
+            {currentIndex + 1} / {words.length}
+          </span>
 
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={handleNext}
-          disabled={!canGoNext}
-        >
-          <ChevronRight className="h-4 w-4" />
-        </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={handleNext}
+            disabled={!canGoNext}
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+          
+          {/* Queue count right next to navigation */}
+          <span className="text-sm text-muted-foreground ml-4">
+            {queueCount} in test stack
+          </span>
+        </div>
       </div>
 
       {/* Landscape mobile: minimal progress indicator */}

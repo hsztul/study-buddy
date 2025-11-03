@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db, word } from "@/lib/db";
+import { db, card } from "@/lib/db";
 import { importWords, type ImportResult } from "@/lib/import-words";
 import path from "path";
 import { eq } from "drizzle-orm";
@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
     const allWords: string[] = JSON.parse(data);
 
     // Get already imported words
-    const existingWords = await db.select({ term: word.term }).from(word);
+    const existingWords = await db.select({ term: card.term }).from(card);
     const existingTerms = new Set(existingWords.map(w => w.term));
 
     // Filter to only words that haven't been imported
@@ -81,7 +81,7 @@ export async function GET() {
     const data = await fs.readFile(filePath, "utf-8");
     const allWords: string[] = JSON.parse(data);
 
-    const existingWords = await db.select({ term: word.term }).from(word);
+    const existingWords = await db.select({ term: card.term }).from(card);
     const remaining = allWords.length - existingWords.length;
 
     return NextResponse.json({

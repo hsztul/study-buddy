@@ -1,25 +1,31 @@
 import Link from "next/link";
 import { UserButton } from "@clerk/nextjs";
-import { Nav } from "@/components/layout/nav";
+import { BookOpen } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export function Header() {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-16 items-center justify-between px-4 sm:px-6">
+      <div className="container max-w-7xl mx-auto flex h-16 items-center justify-between px-6">
         {/* Logo */}
-        <Link href="/review" className="flex items-center space-x-2">
+        <Link href="/stacks" className="flex items-center space-x-2">
           <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent sm:text-2xl">
             StudyBuddy
           </span>
         </Link>
 
-        {/* Navigation - Hidden on mobile, shown on larger screens */}
-        <div className="hidden md:flex md:flex-1 md:justify-center">
-          <Nav />
-        </div>
+        {/* My Stacks Button */}
+        <div className="flex items-center gap-3">
+          <Link href="/stacks">
+            <Button size="sm" className="hidden sm:flex">
+              My Stacks
+            </Button>
+            <Button size="sm" className="sm:hidden">
+              <BookOpen className="w-4 h-4" />
+            </Button>
+          </Link>
 
-        {/* User Avatar - Clickable to Profile */}
-        <div className="flex items-center">
+          {/* User Avatar - Clickable to Profile */}
           <Link href="/profile">
             <UserButton
               afterSignOutUrl="/"
@@ -31,11 +37,6 @@ export function Header() {
             />
           </Link>
         </div>
-      </div>
-
-      {/* Mobile Navigation - Below header */}
-      <div className="border-t md:hidden">
-        <Nav />
       </div>
     </header>
   );

@@ -3,7 +3,7 @@
  * Imports SAT vocabulary terms only (no definitions - those are fetched on-demand)
  */
 
-import { db, word, type NewWord } from "./db";
+import { db, card, type NewCard } from "./db";
 import { eq } from "drizzle-orm";
 
 export interface ImportResult {
@@ -44,7 +44,7 @@ export async function importWords(
     await Promise.all(
       batch.map(async (term) => {
         try {
-          await importSingleWord(term, source);
+          await importSingleCard(term, source);
           result.success++;
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : String(error);
@@ -72,32 +72,34 @@ export async function importWords(
 }
 
 /**
- * Import a single word term (no definitions)
+ * Import a single card term (no definitions)
  */
-async function importSingleWord(term: string, source: string): Promise<void> {
+async function importSingleCard(term: string, source: string): Promise<void> {
   const normalizedTerm = term.trim();
 
-  // Check if word already exists
-  const existing = await db.query.word.findFirst({
-    where: eq(word.term, normalizedTerm),
+  // Check if card already exists
+  const existing = await db.query.card.findFirst({
+    where: eq(card.term, normalizedTerm),
   });
 
   if (existing) {
-    console.log(`[Import] Word "${normalizedTerm}" already exists (ID: ${existing.id}), skipping...`);
-    throw new Error(`Word already exists`); // This will be caught and counted as skipped
+    console.log(`[Import] Card "${normalizedTerm}" already exists (ID: ${existing.id}), skipping...`);
+    throw new Error(`Card already exists`); // This will be caught and counted as skipped
   }
 
-  // Insert word (term only, no definitions)
-  const [insertedWord] = await db
-    .insert(word)
+  // Insert card (term only, no definitions)
+  const [insertedCard] = await db
+    .insert(card)
     .values({
       term: normalizedTerm,
+      definition: "", // Will be populated when definition is fetched
       partOfSpeech: null, // Will be populated when definition is fetched
       source,
+      stackId: 1, // Default to SAT Vocabulary stack
     })
     .returning();
 
-  console.log(`[Import] Inserted word: "${normalizedTerm}" (ID: ${insertedWord.id})`);
+  console.log(`[Import] Inserted card: "${normalizedTerm}" (ID: ${insertedCard.id})`);
 }
 
 /**

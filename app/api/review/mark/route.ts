@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
-import { userWord } from "@/lib/db/schema";
+import { userCard, card } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 
 export async function POST(request: NextRequest) {
@@ -12,26 +12,42 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { wordId } = body;
+    const { cardId, stackId } = body;
 
-    if (!wordId || typeof wordId !== "number") {
-      return NextResponse.json({ error: "Invalid word ID" }, { status: 400 });
+    if (!cardId || typeof cardId !== "number") {
+      return NextResponse.json({ error: "Invalid card ID" }, { status: 400 });
     }
 
-    // Check if userWord record exists
+    if (!stackId || typeof stackId !== "number") {
+      return NextResponse.json({ error: "Invalid stack ID" }, { status: 400 });
+    }
+
+    // Verify card belongs to stack
+    const [cardRecord] = await db
+      .select()
+      .from(card)
+      .where(and(eq(card.id, cardId), eq(card.stackId, stackId)))
+      .limit(1);
+
+    if (!cardRecord) {
+      return NextResponse.json({ error: "Card not found" }, { status: 404 });
+    }
+
+    // Check if userCard record exists
     const existingRecord = await db
       .select()
-      .from(userWord)
-      .where(and(eq(userWord.userId, userId), eq(userWord.wordId, wordId)))
+      .from(userCard)
+      .where(and(eq(userCard.userId, userId), eq(userCard.cardId, cardId)))
       .limit(1);
 
     const now = new Date();
 
     if (existingRecord.length === 0) {
-      // Create new userWord record with reviewed status
-      await db.insert(userWord).values({
+      // Create new userCard record with reviewed status
+      await db.insert(userCard).values({
         userId,
-        wordId,
+        cardId,
+        stackId,
         hasReviewed: true,
         firstReviewedAt: now,
         lastReviewedAt: now,
@@ -44,13 +60,13 @@ export async function POST(request: NextRequest) {
       // Update existing record
       const record = existingRecord[0];
       await db
-        .update(userWord)
+        .update(userCard)
         .set({
           hasReviewed: true,
           firstReviewedAt: record.firstReviewedAt || now,
           lastReviewedAt: now,
         })
-        .where(and(eq(userWord.userId, userId), eq(userWord.wordId, wordId)));
+        .where(and(eq(userCard.userId, userId), eq(userCard.cardId, cardId)));
     }
 
     return NextResponse.json({ success: true });

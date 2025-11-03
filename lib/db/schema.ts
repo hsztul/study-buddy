@@ -9,18 +9,37 @@ export const userProfile = pgTable("user_profile", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-// Core vocabulary words
-export const word = pgTable("word", {
+// Card stacks (collections of cards)
+export const cardStack = pgTable("card_stack", {
   id: serial("id").primaryKey(),
-  term: text("term").notNull().unique(),
-  partOfSpeech: text("part_of_speech"),
-  source: text("source").default("sat_base"),
-});
+  userId: text("user_id").notNull().references(() => userProfile.userId, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  isProtected: boolean("is_protected").default(false).notNull(), // true for SAT Vocab (can't edit/delete)
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => ({
+  userIdIdx: index("card_stack_user_id_idx").on(table.userId),
+}));
 
-// Word definitions - cached from dictionary API with full metadata
+// Cards (terms + definitions) - belongs to a stack
+export const card = pgTable("card", {
+  id: serial("id").primaryKey(),
+  stackId: integer("stack_id").notNull().references(() => cardStack.id, { onDelete: "cascade" }),
+  term: text("term").notNull(),
+  definition: text("definition").notNull(), // user-provided or primary definition
+  partOfSpeech: text("part_of_speech"), // only for SAT vocab
+  source: text("source").default("user").notNull(), // 'user' | 'sat_base'
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => ({
+  stackIdIdx: index("card_stack_id_idx").on(table.stackId),
+  termIdx: index("card_term_idx").on(table.term),
+}));
+
+// Cached definitions for SAT vocab cards (from dictionary API)
 export const definition = pgTable("definition", {
   id: serial("id").primaryKey(),
-  wordId: integer("word_id").notNull().references(() => word.id, { onDelete: "cascade" }),
+  cardId: integer("card_id").notNull().references(() => card.id, { onDelete: "cascade" }),
   definition: text("definition").notNull(),
   example: text("example"),
   partOfSpeech: text("part_of_speech").notNull(),
@@ -31,13 +50,14 @@ export const definition = pgTable("definition", {
   source: text("source").notNull().default("llm-gpt-5-nano"), // 'llm-gpt-5-nano' | 'free-dictionary-api' | 'exa' | etc
   cachedAt: timestamp("cached_at").defaultNow().notNull(),
 }, (table) => ({
-  wordIdRankIdx: index("definition_word_id_rank_idx").on(table.wordId, table.rank),
+  cardIdRankIdx: index("definition_card_id_rank_idx").on(table.cardId, table.rank),
 }));
 
-// User-specific word mastery tracking (spaced repetition + accuracy)
-export const userWord = pgTable("user_word", {
+// User-specific card mastery tracking (spaced repetition + accuracy) - per stack
+export const userCard = pgTable("user_card", {
   userId: text("user_id").notNull().references(() => userProfile.userId, { onDelete: "cascade" }),
-  wordId: integer("word_id").notNull().references(() => word.id, { onDelete: "cascade" }),
+  cardId: integer("card_id").notNull().references(() => card.id, { onDelete: "cascade" }),
+  stackId: integer("stack_id").notNull().references(() => cardStack.id, { onDelete: "cascade" }),
   inTestQueue: boolean("in_test_queue").default(false),
   ease: real("ease").default(2.5), // For future SR algorithms
   intervalDays: integer("interval_days").default(0),
@@ -49,16 +69,17 @@ export const userWord = pgTable("user_word", {
   firstReviewedAt: timestamp("first_reviewed_at"), // when card was first flipped
   lastReviewedAt: timestamp("last_reviewed_at"), // when card was last flipped
 }, (table) => ({
-  pk: primaryKey({ columns: [table.userId, table.wordId] }),
-  userIdDueOnIdx: index("user_word_user_id_due_on_idx").on(table.userId, table.dueOn),
-  userIdHasReviewedIdx: index("user_word_user_id_has_reviewed_idx").on(table.userId, table.hasReviewed),
+  pk: primaryKey({ columns: [table.userId, table.cardId] }),
+  userIdStackIdDueOnIdx: index("user_card_user_id_stack_id_due_on_idx").on(table.userId, table.stackId, table.dueOn),
+  userIdHasReviewedIdx: index("user_card_user_id_has_reviewed_idx").on(table.userId, table.hasReviewed),
 }));
 
 // Individual test attempts
 export const attempt = pgTable("attempt", {
   id: bigserial("id", { mode: "number" }).primaryKey(),
   userId: text("user_id").notNull().references(() => userProfile.userId),
-  wordId: integer("word_id").notNull().references(() => word.id),
+  cardId: integer("card_id").notNull().references(() => card.id),
+  stackId: integer("stack_id").notNull().references(() => cardStack.id),
   mode: text("mode").notNull(), // 'test' | 'review'
   transcript: text("transcript"),
   grade: text("grade"), // 'pass' | 'almost' | 'fail'
@@ -67,29 +88,33 @@ export const attempt = pgTable("attempt", {
   latencyMs: integer("latency_ms"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 }, (table) => ({
-  userIdCreatedAtIdx: index("attempt_user_id_created_at_idx").on(table.userId, table.createdAt),
+  userIdStackIdCreatedAtIdx: index("attempt_user_id_stack_id_created_at_idx").on(table.userId, table.stackId, table.createdAt),
 }));
 
-// Denormalized daily stats for fast aggregation
+// Denormalized daily stats for fast aggregation - per stack
 export const userDailyStats = pgTable("user_daily_stats", {
   userId: text("user_id").notNull().references(() => userProfile.userId),
+  stackId: integer("stack_id").notNull().references(() => cardStack.id, { onDelete: "cascade" }),
   day: date("day").notNull(),
   attempts: integer("attempts").default(0),
   passes: integer("passes").default(0),
   fails: integer("fails").default(0),
 }, (table) => ({
-  pk: primaryKey({ columns: [table.userId, table.day] }),
+  pk: primaryKey({ columns: [table.userId, table.stackId, table.day] }),
 }));
 
 // Type exports for use in application
 export type UserProfile = typeof userProfile.$inferSelect;
 export type NewUserProfile = typeof userProfile.$inferInsert;
 
-export type Word = typeof word.$inferSelect;
-export type NewWord = typeof word.$inferInsert;
+export type CardStack = typeof cardStack.$inferSelect;
+export type NewCardStack = typeof cardStack.$inferInsert;
 
-export type UserWord = typeof userWord.$inferSelect;
-export type NewUserWord = typeof userWord.$inferInsert;
+export type Card = typeof card.$inferSelect;
+export type NewCard = typeof card.$inferInsert;
+
+export type UserCard = typeof userCard.$inferSelect;
+export type NewUserCard = typeof userCard.$inferInsert;
 
 export type Attempt = typeof attempt.$inferSelect;
 export type NewAttempt = typeof attempt.$inferInsert;
@@ -101,15 +126,60 @@ export type Definition = typeof definition.$inferSelect;
 export type NewDefinition = typeof definition.$inferInsert;
 
 // Relations
-export const wordRelations = relations(word, ({ many }) => ({
+export const cardStackRelations = relations(cardStack, ({ one, many }) => ({
+  user: one(userProfile, {
+    fields: [cardStack.userId],
+    references: [userProfile.userId],
+  }),
+  cards: many(card),
+  userCards: many(userCard),
+  attempts: many(attempt),
+  dailyStats: many(userDailyStats),
+}));
+
+export const cardRelations = relations(card, ({ one, many }) => ({
+  stack: one(cardStack, {
+    fields: [card.stackId],
+    references: [cardStack.id],
+  }),
   definitions: many(definition),
-  userWords: many(userWord),
+  userCards: many(userCard),
   attempts: many(attempt),
 }));
 
 export const definitionRelations = relations(definition, ({ one }) => ({
-  word: one(word, {
-    fields: [definition.wordId],
-    references: [word.id],
+  card: one(card, {
+    fields: [definition.cardId],
+    references: [card.id],
+  }),
+}));
+
+export const userCardRelations = relations(userCard, ({ one }) => ({
+  user: one(userProfile, {
+    fields: [userCard.userId],
+    references: [userProfile.userId],
+  }),
+  card: one(card, {
+    fields: [userCard.cardId],
+    references: [card.id],
+  }),
+  stack: one(cardStack, {
+    fields: [userCard.stackId],
+    references: [cardStack.id],
+  }),
+}));
+
+export const attemptRelations = relations(attempt, ({ one }) => ({
+  user: one(userProfile, {
+    fields: [attempt.userId],
+    references: [userProfile.userId],
+  }),
+  card: one(card, {
+    fields: [attempt.cardId],
+    references: [card.id],
+  }),
+  stack: one(cardStack, {
+    fields: [attempt.stackId],
+    references: [cardStack.id],
   }),
 }));

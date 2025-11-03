@@ -9,7 +9,7 @@
 import './load-env';
 
 import { db } from '@/lib/db';
-import { word, definition } from '@/lib/db/schema';
+import { card, definition } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { LLMLLMScraper } from '@/lib/scrapers/llm-scraper';
 

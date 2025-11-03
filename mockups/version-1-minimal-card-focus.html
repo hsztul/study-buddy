@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudyBuddy - Minimal Card Focus</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+            color: white;
+        }
+        
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+        
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            color: #667eea;
+        }
+        
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 2rem;
+            max-width: 500px;
+            margin: 0 auto;
+            width: 100%;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            height: 8px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: white;
+            width: 45%;
+            border-radius: 20px;
+            transition: width 0.3s ease;
+        }
+        
+        .card-container {
+            width: 100%;
+            perspective: 1000px;
+        }
+        
+        .flashcard {
+            background: white;
+            border-radius: 24px;
+            padding: 3rem 2rem;
+            min-height: 400px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+        
+        .flashcard:active {
+            transform: scale(0.98);
+        }
+        
+        .word {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #1a202c;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+        
+        .phonetic {
+            font-size: 1rem;
+            color: #718096;
+            margin-bottom: 2rem;
+        }
+        
+        .definition {
+            font-size: 1.125rem;
+            color: #4a5568;
+            text-align: center;
+            line-height: 1.6;
+        }
+        
+        .tap-hint {
+            color: #a0aec0;
+            font-size: 0.875rem;
+            margin-top: 2rem;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 1rem;
+            width: 100%;
+            align-items: center;
+        }
+        
+        .btn {
+            padding: 1rem 2rem;
+            border-radius: 16px;
+            border: none;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            flex: 1;
+        }
+        
+        .btn-primary {
+            background: white;
+            color: #667eea;
+        }
+        
+        .btn-primary:active {
+            transform: scale(0.95);
+        }
+        
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 0.75rem 1.25rem;
+            border-radius: 16px;
+            color: white;
+            font-size: 0.875rem;
+        }
+        
+        .checkbox {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+        
+        .bottom-nav {
+            display: flex;
+            justify-content: space-around;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 1rem;
+            margin-top: 2rem;
+        }
+        
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.25rem;
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            font-size: 0.75rem;
+            padding: 0.5rem 1rem;
+            border-radius: 12px;
+            transition: all 0.2s ease;
+        }
+        
+        .nav-item.active {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+        
+        .nav-icon {
+            font-size: 1.5rem;
+        }
+        
+        @media (min-width: 768px) {
+            body {
+                padding: 2rem;
+            }
+            
+            .main-content {
+                max-width: 600px;
+            }
+            
+            .flashcard {
+                min-height: 450px;
+                padding: 4rem 3rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">StudyBuddy</div>
+        <div class="avatar">HS</div>
+    </div>
+    
+    <div class="main-content">
+        <div class="progress-bar">
+            <div class="progress-fill"></div>
+        </div>
+        
+        <div class="card-container">
+            <div class="flashcard">
+                <div class="word">Aberration</div>
+                <div class="phonetic">/ˌæbəˈreɪʃən/</div>
+                <div class="definition">
+                    A departure from what is normal, usual, or expected, typically one that is unwelcome
+                </div>
+                <div class="tap-hint">Tap to flip</div>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <div class="checkbox-container">
+                <input type="checkbox" class="checkbox" id="test-me">
+                <label for="test-me">Test me</label>
+            </div>
+            <button class="btn btn-primary">Next →</button>
+        </div>
+        
+        <div class="bottom-nav">
+            <a href="#" class="nav-item active">
+                <div class="nav-icon">📚</div>
+                <div>Review</div>
+            </a>
+            <a href="#" class="nav-item">
+                <div class="nav-icon">🎤</div>
+                <div>Test</div>
+            </a>
+            <a href="#" class="nav-item">
+                <div class="nav-icon">📊</div>
+                <div>Stats</div>
+            </a>
+        </div>
+    </div>
+</body>
+</html>

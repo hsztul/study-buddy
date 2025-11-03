@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
-import { word, userWord, attempt } from "@/lib/db/schema";
+import { card, userCard, attempt } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 
 /**
@@ -36,47 +36,68 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Fetch user's reviewed and tested words for personalized tutoring
-    const reviewedWords = await db
-      .select({
-        term: word.term,
-        partOfSpeech: word.partOfSpeech,
-      })
-      .from(userWord)
-      .innerJoin(word, eq(userWord.wordId, word.id))
-      .where(and(
-        eq(userWord.userId, userId),
-        eq(userWord.hasReviewed, true)
-      ));
+    // Get stackId from request body
+    const body = await req.json();
+    const { stackId } = body;
 
-    const testedWords = await db
+    // Build where conditions for filtering by stack
+    const reviewedWhere = stackId 
+      ? and(
+          eq(userCard.userId, userId),
+          eq(userCard.hasReviewed, true),
+          eq(userCard.stackId, stackId)
+        )
+      : and(
+          eq(userCard.userId, userId),
+          eq(userCard.hasReviewed, true)
+        );
+
+    const testedWhere = stackId
+      ? and(
+          eq(attempt.userId, userId),
+          eq(attempt.mode, 'test'),
+          eq(attempt.stackId, stackId)
+        )
+      : and(
+          eq(attempt.userId, userId),
+          eq(attempt.mode, 'test')
+        );
+
+    // Fetch user's reviewed and tested cards for personalized tutoring (filtered by stack)
+    const reviewedCards = await db
       .select({
-        term: word.term,
-        partOfSpeech: word.partOfSpeech,
+        term: card.term,
+        partOfSpeech: card.partOfSpeech,
+      })
+      .from(userCard)
+      .innerJoin(card, eq(userCard.cardId, card.id))
+      .where(reviewedWhere);
+
+    const testedCards = await db
+      .select({
+        term: card.term,
+        partOfSpeech: card.partOfSpeech,
         grade: attempt.grade,
         score: attempt.score,
       })
       .from(attempt)
-      .innerJoin(word, eq(attempt.wordId, word.id))
-      .where(and(
-        eq(attempt.userId, userId),
-        eq(attempt.mode, 'test')
-      ))
+      .innerJoin(card, eq(attempt.cardId, card.id))
+      .where(testedWhere)
       .orderBy(attempt.createdAt)
       .limit(50); // Limit to recent tests for context
 
     // Prepare user context for the tutor
     const userContext = {
-      reviewed: reviewedWords.map(w => w.term),
-      tested: testedWords.map(w => ({
+      reviewed: reviewedCards.map(w => w.term),
+      tested: testedCards.map(w => ({
         term: w.term,
         partOfSpeech: w.partOfSpeech,
         lastGrade: w.grade,
         lastScore: w.score
       })),
       totals: {
-        reviewed: reviewedWords.length,
-        tested: testedWords.length
+        reviewed: reviewedCards.length,
+        tested: testedCards.length
       }
     };
 
@@ -167,7 +188,7 @@ You are an encouraging vocabulary tutor specializing in helping students master 
 - Conversational and natural, like a supportive teacher
 - Enthusiastic about words and their meanings
 - Adaptive to the student's pace and learning style
-- Celebratory of progress, no matter how small
+- Celebratory of progress
 
 ${contextSection}
 

@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudyBuddy - Swipe Deck</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f7fafc;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .top-bar {
+            background: white;
+            padding: 1rem 1.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #2d3748;
+        }
+        
+        .mode-toggle {
+            display: flex;
+            background: #edf2f7;
+            border-radius: 12px;
+            padding: 0.25rem;
+        }
+        
+        .mode-btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            background: transparent;
+            border-radius: 10px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #718096;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .mode-btn.active {
+            background: white;
+            color: #667eea;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .stats-bar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1.5rem;
+            display: flex;
+            justify-content: space-around;
+        }
+        
+        .stat {
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+        
+        .stat-label {
+            font-size: 0.75rem;
+            opacity: 0.9;
+            margin-top: 0.25rem;
+        }
+        
+        .deck-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 1rem;
+            position: relative;
+        }
+        
+        .card-stack {
+            position: relative;
+            width: 100%;
+            max-width: 400px;
+            height: 500px;
+        }
+        
+        .card {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+        
+        .card:nth-child(2) {
+            transform: scale(0.95) translateY(10px);
+            opacity: 0.7;
+            z-index: -1;
+        }
+        
+        .card:nth-child(3) {
+            transform: scale(0.9) translateY(20px);
+            opacity: 0.4;
+            z-index: -2;
+        }
+        
+        .card-word {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #1a202c;
+            margin-bottom: 0.5rem;
+        }
+        
+        .card-phonetic {
+            font-size: 1rem;
+            color: #a0aec0;
+            margin-bottom: 2rem;
+        }
+        
+        .card-definition {
+            font-size: 1.125rem;
+            color: #4a5568;
+            text-align: center;
+            line-height: 1.6;
+        }
+        
+        .swipe-hint {
+            position: absolute;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #cbd5e0;
+            font-size: 0.875rem;
+            display: flex;
+            gap: 1rem;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            padding: 1.5rem;
+            justify-content: center;
+        }
+        
+        .action-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            transition: transform 0.2s ease;
+        }
+        
+        .action-btn:active {
+            transform: scale(0.9);
+        }
+        
+        .btn-skip {
+            background: #fed7d7;
+        }
+        
+        .btn-test {
+            background: #fefcbf;
+        }
+        
+        .btn-next {
+            background: #c6f6d5;
+        }
+        
+        @media (min-width: 768px) {
+            .card-stack {
+                max-width: 500px;
+                height: 550px;
+            }
+            
+            .action-buttons {
+                gap: 2rem;
+            }
+            
+            .action-btn {
+                width: 70px;
+                height: 70px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="top-bar">
+        <div class="logo">StudyBuddy</div>
+        <div class="mode-toggle">
+            <button class="mode-btn active">Review</button>
+            <button class="mode-btn">Test</button>
+        </div>
+    </div>
+    
+    <div class="stats-bar">
+        <div class="stat">
+            <div class="stat-value">12</div>
+            <div class="stat-label">Reviewed</div>
+        </div>
+        <div class="stat">
+            <div class="stat-value">45/300</div>
+            <div class="stat-label">Progress</div>
+        </div>
+        <div class="stat">
+            <div class="stat-value">8</div>
+            <div class="stat-label">To Test</div>
+        </div>
+    </div>
+    
+    <div class="deck-container">
+        <div class="card-stack">
+            <div class="card">
+                <div class="card-word">Ephemeral</div>
+                <div class="card-phonetic">/ɪˈfɛmərəl/</div>
+                <div class="card-definition">
+                    Lasting for a very short time; fleeting or transitory
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-word">Benevolent</div>
+            </div>
+            <div class="card">
+                <div class="card-word">Candid</div>
+            </div>
+        </div>
+        <div class="swipe-hint">
+            <span>← Skip</span>
+            <span>Next →</span>
+        </div>
+    </div>
+    
+    <div class="action-buttons">
+        <button class="action-btn btn-skip">✕</button>
+        <button class="action-btn btn-test">⭐</button>
+        <button class="action-btn btn-next">✓</button>
+    </div>
+</body>
+</html>

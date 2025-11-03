@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
-import { userWord, attempt } from "@/lib/db/schema";
+import { userCard, attempt } from "@/lib/db/schema";
 import { eq, and, sql } from "drizzle-orm";
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ wordId: string }> }
+  { params }: { params: Promise<{ cardId: string }> }
 ) {
   try {
     const { userId } = await auth();
@@ -14,17 +14,17 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { wordId } = await params;
-    const wordIdNum = parseInt(wordId);
-    if (isNaN(wordIdNum)) {
-      return NextResponse.json({ error: "Invalid word ID" }, { status: 400 });
+    const { cardId } = await params;
+    const cardIdNum = parseInt(cardId);
+    if (isNaN(cardIdNum)) {
+      return NextResponse.json({ error: "Invalid card ID" }, { status: 400 });
     }
 
-    // Check if the user has any attempts for this word
+    // Check if the user has any attempts for this card
     const attemptCount = await db
       .select({ count: sql<number>`count(*)::int` })
       .from(attempt)
-      .where(and(eq(attempt.userId, userId), eq(attempt.wordId, wordIdNum)));
+      .where(and(eq(attempt.userId, userId), eq(attempt.cardId, cardIdNum)));
 
     if (attemptCount[0]?.count > 0) {
       return NextResponse.json(
@@ -33,15 +33,15 @@ export async function DELETE(
       );
     }
 
-    // Update the userWord record to remove reviewed status
+    // Update the userCard record to remove reviewed status
     const updateResult = await db
-      .update(userWord)
+      .update(userCard)
       .set({
         hasReviewed: false,
         firstReviewedAt: null,
         lastReviewedAt: null,
       })
-      .where(and(eq(userWord.userId, userId), eq(userWord.wordId, wordIdNum)))
+      .where(and(eq(userCard.userId, userId), eq(userCard.cardId, cardIdNum)))
       .returning();
 
     if (updateResult.length === 0) {

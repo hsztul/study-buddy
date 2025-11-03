@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db, word } from "@/lib/db";
-import { getWordDefinitions } from "@/lib/dictionary";
+import { db } from "@/lib/db";
+import { card } from "@/lib/db/schema";
 import { fetchDefinition, saveDefinitionsToDb } from "@/lib/dictionary";
 import { scraperManager } from "@/lib/scrapers/scraper-manager";
 import { eq } from "drizzle-orm";
 
 /**
  * GET /api/words/[id]/definition
- * Lazy-load definition for a specific word with multi-tier caching
+ * Lazy-load definition for a specific card with multi-tier caching
  * L1: In-memory cache (fastest)
  * L2: Database cache (persistent, 7 days)
  * L3: API scrapers (fallback)
@@ -18,37 +18,37 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const wordId = parseInt(id);
+    const cardId = parseInt(id);
 
-    if (isNaN(wordId)) {
+    if (isNaN(cardId)) {
       return NextResponse.json(
-        { error: "Invalid word ID" },
+        { error: "Invalid card ID" },
         { status: 400 }
       );
     }
 
-    // Fetch word from database
-    const wordRecord = await db.query.word.findFirst({
-      where: eq(word.id, wordId),
+    // Fetch card from database
+    const cardRecord = await db.query.card.findFirst({
+      where: eq(card.id, cardId),
     });
 
-    if (!wordRecord) {
+    if (!cardRecord) {
       return NextResponse.json(
-        { error: "Word not found" },
+        { error: "Card not found" },
         { status: 404 }
       );
     }
 
     // Fetch definitions with multi-tier caching
     // L1: In-memory → L2: Database → L3: API scrapers
-    console.log(`[API] Fetching definition for word: "${wordRecord.term}" (ID: ${wordId})`);
-    const apiData = await fetchDefinition(wordRecord.term);
+    console.log(`[API] Fetching definition for word: "${cardRecord.term}" (ID: ${cardId})`);
+    const apiData = await fetchDefinition(cardRecord.term);
 
     if (!apiData || apiData.length === 0) {
-      console.warn(`[API] No definitions found for "${wordRecord.term}"`);
+      console.warn(`[API] No definitions found for "${cardRecord.term}"`);
       return NextResponse.json(
         {
-          word: wordRecord.term,
+          word: cardRecord.term,
           definitions: [],
           error: "Definition not available. The dictionary API may be temporarily down or this word may not be in the dictionary.",
         },
@@ -74,10 +74,10 @@ export async function GET(
       }
     }
     
-    console.log(`[API] Successfully fetched definition for "${wordRecord.term}"`);
+    console.log(`[API] Successfully fetched definition for "${cardRecord.term}"`);
     return NextResponse.json({
-      word: wordRecord.term,
-      wordId: wordRecord.id,
+      word: cardRecord.term,
+      wordId: cardRecord.id,
       definitions: simplifiedDefs,
     });
   } catch (error) {

@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
 import { 
-  userWord, 
-  word, 
+  userCard, 
+  card, 
   attempt
 } from "@/lib/db/schema";
 import { eq, and, desc, asc, ilike, sql, count } from "drizzle-orm";
@@ -25,38 +25,38 @@ export async function GET(request: NextRequest) {
 
     // Build the complete query with all conditions
     const baseConditions = [
-      eq(userWord.userId, userId),
+      eq(userCard.userId, userId),
       // Only show cards that have been reviewed OR have attempts
-      sql`(${userWord.hasReviewed} = true OR EXISTS (
+      sql`(${userCard.hasReviewed} = true OR EXISTS (
         SELECT 1 FROM ${attempt} 
         WHERE ${attempt.userId} = ${userId} 
-        AND ${attempt.wordId} = ${userWord.wordId}
+        AND ${attempt.cardId} = ${userCard.cardId}
       ))`
     ];
 
     // Apply search filter
     if (search) {
-      baseConditions.push(ilike(word.term, `%${search}%`));
+      baseConditions.push(ilike(card.term, `%${search}%`));
     }
 
     // Apply status filter
     switch (filter) {
       case "reviewed":
-        baseConditions.push(eq(userWord.hasReviewed, true));
+        baseConditions.push(eq(userCard.hasReviewed, true));
         break;
       case "tested":
         // Only show cards that have attempts (regardless of reviewed status)
         baseConditions.push(sql`EXISTS (
           SELECT 1 FROM ${attempt} 
           WHERE ${attempt.userId} = ${userId} 
-          AND ${attempt.wordId} = ${userWord.wordId}
+          AND ${attempt.cardId} = ${userCard.cardId}
         )`);
         break;
       case "correct":
-        baseConditions.push(eq(userWord.lastResult, "pass"));
+        baseConditions.push(eq(userCard.lastResult, "pass"));
         break;
       case "incorrect":
-        baseConditions.push(sql`${userWord.lastResult} IN ('fail', 'almost')`);
+        baseConditions.push(sql`${userCard.lastResult} IN ('fail', 'almost')`);
         break;
       // "all" now means reviewed OR tested (due to base query filter)
     }
@@ -64,28 +64,28 @@ export async function GET(request: NextRequest) {
     // Determine sorting
     let orderByClause;
     if (sort === "recently-reviewed") {
-      orderByClause = desc(userWord.lastReviewedAt);
+      orderByClause = desc(userCard.lastReviewedAt);
     } else if (sort === "alphabetical") {
-      orderByClause = asc(word.term);
+      orderByClause = asc(card.term);
     } else {
-      orderByClause = desc(userWord.lastReviewedAt);
+      orderByClause = desc(userCard.lastReviewedAt);
     }
 
     // Build the complete query
     const baseQuery = db
       .select({
-        id: word.id,
-        term: word.term,
-        partOfSpeech: word.partOfSpeech,
-        hasReviewed: userWord.hasReviewed,
-        firstReviewedAt: userWord.firstReviewedAt,
-        lastReviewedAt: userWord.lastReviewedAt,
-        lastResult: userWord.lastResult,
-        streak: userWord.streak,
-        inTestQueue: userWord.inTestQueue,
+        id: card.id,
+        term: card.term,
+        partOfSpeech: card.partOfSpeech,
+        hasReviewed: userCard.hasReviewed,
+        firstReviewedAt: userCard.firstReviewedAt,
+        lastReviewedAt: userCard.lastReviewedAt,
+        lastResult: userCard.lastResult,
+        streak: userCard.streak,
+        inTestQueue: userCard.inTestQueue,
       })
-      .from(userWord)
-      .leftJoin(word, eq(userWord.wordId, word.id))
+      .from(userCard)
+      .leftJoin(card, eq(userCard.cardId, card.id))
       .where(and(...baseConditions))
       .orderBy(orderByClause);
 
@@ -104,8 +104,8 @@ export async function GET(request: NextRequest) {
             lastAttemptAt: sql<Date>`MAX(${attempt.createdAt})`.as("last_attempt_at"),
           })
           .from(attempt)
-          .where(and(eq(attempt.userId, userId), eq(attempt.wordId, card.id!)))
-          .groupBy(attempt.wordId);
+          .where(and(eq(attempt.userId, userId), eq(attempt.cardId, card.id!)))
+          .groupBy(attempt.cardId);
 
         const stats = attemptStats[0] || {
           attemptCount: 0,
@@ -140,15 +140,15 @@ export async function GET(request: NextRequest) {
     // Get total count with same filter as base query
     const totalCount = await db
       .select({ count: count() })
-      .from(userWord)
-      .leftJoin(word, eq(userWord.wordId, word.id))
+      .from(userCard)
+      .leftJoin(card, eq(userCard.cardId, card.id))
       .where(and(
-        eq(userWord.userId, userId),
+        eq(userCard.userId, userId),
         // Only count cards that have been reviewed OR have attempts
-        sql`(${userWord.hasReviewed} = true OR EXISTS (
+        sql`(${userCard.hasReviewed} = true OR EXISTS (
           SELECT 1 FROM ${attempt} 
           WHERE ${attempt.userId} = ${userId} 
-          AND ${attempt.wordId} = ${userWord.wordId}
+          AND ${attempt.cardId} = ${userCard.cardId}
         ))`
       ));
 

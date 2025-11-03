@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
-import { attempt, word, definition, userWord } from "@/lib/db/schema";
+import { attempt, card, definition, userCard } from "@/lib/db/schema";
 import { eq, and, asc } from "drizzle-orm";
 import { transcribeAudio } from "@/lib/whisper";
 import { gradeDefinition } from "@/lib/grader";
-import { updateUserWord } from "@/lib/spaced-repetition";
+import { updateUserCard } from "@/lib/spaced-repetition";
 
 /**
  * POST /api/test/attempt
@@ -51,27 +51,27 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 2. Get word and its primary definition
-    const wordData = await db
+    // 2. Get card and its primary definition
+    const cardData = await db
       .select({
-        term: word.term,
+        term: card.term,
         definition: definition.definition,
       })
-      .from(word)
-      .leftJoin(definition, eq(word.id, definition.wordId))
-      .where(and(eq(word.id, wordId), eq(definition.rank, 1)))
+      .from(card)
+      .leftJoin(definition, eq(card.id, definition.cardId))
+      .where(and(eq(card.id, wordId), eq(definition.rank, 1)))
       .limit(1);
 
-    if (wordData.length === 0) {
-      return NextResponse.json({ error: "Word not found" }, { status: 404 });
+    if (cardData.length === 0) {
+      return NextResponse.json({ error: "Card not found" }, { status: 404 });
     }
 
-    const { term, definition: wordDefinition } = wordData[0];
+    const { term, definition: cardDefinition } = cardData[0];
 
     // 3. Grade the response using AI (gpt-4o-mini)
     const gradeResult = await gradeDefinition(
       term,
-      wordDefinition || "No definition available",
+      cardDefinition || "No definition available",
       transcript
     );
 
@@ -80,7 +80,8 @@ export async function POST(request: NextRequest) {
     // 4. Log attempt to database
     await db.insert(attempt).values({
       userId,
-      wordId,
+      cardId: wordId,
+      stackId: 1, // Default stack for backwards compatibility
       mode: "test",
       transcript,
       grade: gradeResult.grade,
@@ -89,8 +90,9 @@ export async function POST(request: NextRequest) {
       latencyMs,
     });
 
-    // 5. Update user_word with spaced repetition scheduling
-    const srResult = await updateUserWord(userId, wordId, gradeResult.grade);
+    // 5. Update user_card with spaced repetition scheduling
+    // For backwards compatibility, use default stack ID 1 (SAT Vocabulary)
+    const srResult = await updateUserCard(userId, wordId, 1, gradeResult.grade);
 
     // 6. Return result
     return NextResponse.json({

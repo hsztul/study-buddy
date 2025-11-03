@@ -9,7 +9,7 @@
 import './load-env';
 
 import { db } from '@/lib/db';
-import { word, definition } from '@/lib/db/schema';
+import { card, definition } from '@/lib/db/schema';
 import { eq, notInArray, sql } from 'drizzle-orm';
 import { scraperManager } from '@/lib/scrapers/scraper-manager';
 
@@ -33,46 +33,46 @@ async function populateDefinitions() {
   };
 
   try {
-    // Get all words
-    const allWords = await db.select().from(word);
-    stats.totalWords = allWords.length;
-    console.log(`📚 Total words in database: ${stats.totalWords}`);
+    // Get all cards
+    const allCards = await db.select().from(card);
+    stats.totalWords = allCards.length;
+    console.log(`📚 Total cards in database: ${stats.totalWords}`);
 
-    // Get words that already have definitions
-    const wordsWithDefs = await db
-      .selectDistinct({ wordId: definition.wordId })
+    // Get cards that already have definitions
+    const cardsWithDefs = await db
+      .selectDistinct({ cardId: definition.cardId })
       .from(definition);
     
-    const wordIdsWithDefs = new Set(wordsWithDefs.map(w => w.wordId));
-    stats.wordsWithDefinitions = wordIdsWithDefs.size;
+    const cardIdsWithDefs = new Set(cardsWithDefs.map(w => w.cardId));
+    stats.wordsWithDefinitions = cardIdsWithDefs.size;
 
-    // Find words without definitions
-    const wordsWithoutDefs = allWords.filter(w => !wordIdsWithDefs.has(w.id));
-    stats.wordsWithoutDefinitions = wordsWithoutDefs.length;
+    // Find cards without definitions
+    const cardsWithoutDefs = allCards.filter(w => !cardIdsWithDefs.has(w.id));
+    stats.wordsWithoutDefinitions = cardsWithoutDefs.length;
 
-    console.log(`✅ Words with definitions: ${stats.wordsWithDefinitions}`);
-    console.log(`❌ Words without definitions: ${stats.wordsWithoutDefinitions}\n`);
+    console.log(`✅ Cards with definitions: ${stats.wordsWithDefinitions}`);
+    console.log(`❌ Cards without definitions: ${stats.wordsWithoutDefinitions}\n`);
 
-    if (wordsWithoutDefs.length === 0) {
-      console.log('🎉 All words already have definitions!');
+    if (cardsWithoutDefs.length === 0) {
+      console.log('🎉 All cards already have definitions!');
       return stats;
     }
 
-    console.log(`🚀 Starting to fetch definitions for ${wordsWithoutDefs.length} words...\n`);
+    console.log(`🚀 Starting to fetch definitions for ${cardsWithoutDefs.length} cards...\n`);
 
-    // Process each word without a definition
-    for (let i = 0; i < wordsWithoutDefs.length; i++) {
-      const currentWord = wordsWithoutDefs[i];
-      const progress = `[${i + 1}/${wordsWithoutDefs.length}]`;
+    // Process each card without a definition
+    for (let i = 0; i < cardsWithoutDefs.length; i++) {
+      const currentCard = cardsWithoutDefs[i];
+      const progress = `[${i + 1}/${cardsWithoutDefs.length}]`;
 
-      console.log(`${progress} Fetching definition for "${currentWord.term}"...`);
+      console.log(`${progress} Fetching definition for "${currentCard.term}"...`);
 
       try {
         // Fetch definition using scraper manager
-        const scrapedData = await scraperManager.fetchDefinition(currentWord.term);
+        const scrapedData = await scraperManager.fetchDefinition(currentCard.term);
 
         if (!scrapedData || scrapedData.meanings.length === 0) {
-          console.log(`  ⚠️  No definition found for "${currentWord.term}"`);
+          console.log(`  ⚠️  No definition found for "${currentCard.term}"`);
           stats.failed++;
           continue;
         }
@@ -82,7 +82,7 @@ async function populateDefinitions() {
         for (const meaning of scrapedData.meanings) {
           for (const def of meaning.definitions) {
             await db.insert(definition).values({
-              wordId: currentWord.id,
+              cardId: currentCard.id,
               definition: def.definition,
               example: def.example || null,
               partOfSpeech: meaning.partOfSpeech,
@@ -100,11 +100,11 @@ async function populateDefinitions() {
         console.log(`  ✅ Added ${rank - 1} definition(s) from ${scrapedData.source}`);
 
         // Small delay to avoid rate limiting
-        if (i < wordsWithoutDefs.length - 1) {
+        if (i < cardsWithoutDefs.length - 1) {
           await new Promise(resolve => setTimeout(resolve, 1000));
         }
       } catch (error) {
-        console.error(`  ❌ Error fetching definition for "${currentWord.term}":`, error);
+        console.error(`  ❌ Error fetching definition for "${currentCard.term}":`, error);
         stats.failed++;
       }
     }
@@ -112,12 +112,12 @@ async function populateDefinitions() {
     console.log('\n' + '='.repeat(60));
     console.log('📊 Final Statistics:');
     console.log('='.repeat(60));
-    console.log(`Total words: ${stats.totalWords}`);
-    console.log(`Words with definitions (before): ${stats.wordsWithDefinitions}`);
-    console.log(`Words without definitions (before): ${stats.wordsWithoutDefinitions}`);
+    console.log(`Total cards: ${stats.totalWords}`);
+    console.log(`Cards with definitions (before): ${stats.wordsWithDefinitions}`);
+    console.log(`Cards without definitions (before): ${stats.wordsWithoutDefinitions}`);
     console.log(`Definitions added: ${stats.definitionsAdded}`);
     console.log(`Failed: ${stats.failed}`);
-    console.log(`Words with definitions (after): ${stats.wordsWithDefinitions + stats.definitionsAdded}`);
+    console.log(`Cards with definitions (after): ${stats.wordsWithDefinitions + stats.definitionsAdded}`);
     console.log('='.repeat(60));
 
     return stats;

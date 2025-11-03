@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import { db, userWord, userProfile } from "@/lib/db";
+import { db } from "@/lib/db";
+import { userCard, userProfile, card } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { z } from "zod";
 
 const toggleQueueSchema = z.object({
-  wordId: z.number(),
+  cardId: z.number(),
+  stackId: z.number(),
   add: z.boolean(),
 });
 
@@ -18,7 +20,18 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { wordId, add } = toggleQueueSchema.parse(body);
+    const { cardId, stackId, add } = toggleQueueSchema.parse(body);
+
+    // Verify card belongs to stack
+    const [cardRecord] = await db
+      .select()
+      .from(card)
+      .where(and(eq(card.id, cardId), eq(card.stackId, stackId)))
+      .limit(1);
+
+    if (!cardRecord) {
+      return NextResponse.json({ error: "Card not found" }, { status: 404 });
+    }
 
     // Ensure user profile exists
     await db
@@ -26,16 +39,17 @@ export async function POST(request: NextRequest) {
       .values({ userId })
       .onConflictDoNothing();
 
-    // Upsert user_word record
+    // Upsert user_card record
     await db
-      .insert(userWord)
+      .insert(userCard)
       .values({
         userId,
-        wordId,
+        cardId,
+        stackId,
         inTestQueue: add,
       })
       .onConflictDoUpdate({
-        target: [userWord.userId, userWord.wordId],
+        target: [userCard.userId, userCard.cardId],
         set: { inTestQueue: add },
       });
 

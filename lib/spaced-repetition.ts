@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { userWord } from "@/lib/db/schema";
+import { userCard } from "@/lib/db/schema";
 import { eq, and, sql, lte } from "drizzle-orm";
 
 /**
@@ -20,19 +20,20 @@ interface UpdateResult {
 }
 
 /**
- * Update user_word record based on test result
+ * Update user_card record based on test result
  * Implements simple spaced repetition algorithm
  */
-export async function updateUserWord(
+export async function updateUserCard(
   userId: string,
-  wordId: number,
+  cardId: number,
+  stackId: number,
   grade: Grade
 ): Promise<UpdateResult> {
-  // Get existing user_word record
+  // Get existing user_card record
   const existing = await db
     .select()
-    .from(userWord)
-    .where(and(eq(userWord.userId, userId), eq(userWord.wordId, wordId)))
+    .from(userCard)
+    .where(and(eq(userCard.userId, userId), eq(userCard.cardId, cardId)))
     .limit(1);
 
   const now = new Date();
@@ -51,9 +52,10 @@ export async function updateUserWord(
     }
     dueOn = addDays(now, newInterval);
 
-    await db.insert(userWord).values({
+    await db.insert(userCard).values({
       userId,
-      wordId,
+      cardId,
+      stackId,
       lastResult: grade,
       streak: newStreak,
       intervalDays: newInterval,
@@ -85,14 +87,14 @@ export async function updateUserWord(
     dueOn = addDays(now, newInterval);
 
     await db
-      .update(userWord)
+      .update(userCard)
       .set({
         lastResult: grade,
         streak: newStreak,
         intervalDays: newInterval,
         dueOn: dueOn.toISOString().split('T')[0], // Convert Date to YYYY-MM-DD string
       })
-      .where(and(eq(userWord.userId, userId), eq(userWord.wordId, wordId)));
+      .where(and(eq(userCard.userId, userId), eq(userCard.cardId, cardId)));
   }
 
   return {
@@ -103,26 +105,50 @@ export async function updateUserWord(
 }
 
 /**
- * Get words due for review
+ * Get words due for review for a specific stack
+ */
+export async function getDueWordsForStack(userId: string, stackId: number, limit: number = 20): Promise<number[]> {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const dueWords = await db
+    .select({ cardId: userCard.cardId })
+    .from(userCard)
+    .where(
+      and(
+        eq(userCard.userId, userId),
+        eq(userCard.stackId, stackId),
+        // Due on or before today
+        sql`${userCard.dueOn} <= ${today}`
+      )
+    )
+    .orderBy(userCard.dueOn) // Oldest due first
+    .limit(limit);
+
+  return dueWords.map((w) => w.cardId);
+}
+
+/**
+ * Get words due for review (all stacks)
  */
 export async function getDueWords(userId: string, limit: number = 20): Promise<number[]> {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
   const dueWords = await db
-    .select({ wordId: userWord.wordId })
-    .from(userWord)
+    .select({ cardId: userCard.cardId })
+    .from(userCard)
     .where(
       and(
-        eq(userWord.userId, userId),
+        eq(userCard.userId, userId),
         // Due on or before today
-        sql`${userWord.dueOn} <= ${today}`
+        sql`${userCard.dueOn} <= ${today}`
       )
     )
-    .orderBy(userWord.dueOn) // Oldest due first
+    .orderBy(userCard.dueOn) // Oldest due first
     .limit(limit);
 
-  return dueWords.map((w) => w.wordId);
+  return dueWords.map((w) => w.cardId);
 }
 
 /**
@@ -144,8 +170,8 @@ export async function getSRStats(userId: string): Promise<{
 }> {
   const allWords = await db
     .select()
-    .from(userWord)
-    .where(eq(userWord.userId, userId));
+    .from(userCard)
+    .where(eq(userCard.userId, userId));
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);

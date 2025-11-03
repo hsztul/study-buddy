@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
-import { attempt, userWord, word } from "@/lib/db/schema";
+import { attempt, userCard, card } from "@/lib/db/schema";
 import { eq, and, gte, sql, desc } from "drizzle-orm";
 import { getSRStats } from "@/lib/spaced-repetition";
 
@@ -42,37 +42,37 @@ export async function GET(request: NextRequest) {
     const accuracyLast7Days =
       recentAttempts.length > 0 ? passCount / recentAttempts.length : 0;
 
-    // Get per-word stats
-    const perWordStats = await db
+    // Get per-card stats
+    const perCardStats = await db
       .select({
-        wordId: userWord.wordId,
-        term: word.term,
-        streak: userWord.streak,
-        lastResult: userWord.lastResult,
-        intervalDays: userWord.intervalDays,
-        dueOn: userWord.dueOn,
+        cardId: userCard.cardId,
+        term: card.term,
+        streak: userCard.streak,
+        lastResult: userCard.lastResult,
+        intervalDays: userCard.intervalDays,
+        dueOn: userCard.dueOn,
       })
-      .from(userWord)
-      .innerJoin(word, eq(userWord.wordId, word.id))
-      .where(eq(userWord.userId, userId))
-      .orderBy(desc(userWord.streak));
+      .from(userCard)
+      .innerJoin(card, eq(userCard.cardId, card.id))
+      .where(eq(userCard.userId, userId))
+      .orderBy(desc(userCard.streak));
 
-    // Get attempt counts per word
+    // Get attempt counts per card
     const attemptCounts = await db
       .select({
-        wordId: attempt.wordId,
+        cardId: attempt.cardId,
         totalAttempts: sql<number>`count(*)`,
         passes: sql<number>`sum(case when ${attempt.grade} = 'pass' then 1 else 0 end)`,
       })
       .from(attempt)
       .where(eq(attempt.userId, userId))
-      .groupBy(attempt.wordId);
+      .groupBy(attempt.cardId);
 
-    // Combine per-word stats with attempt counts
-    const wordStats = perWordStats.map((ws) => {
-      const attemptData = attemptCounts.find((ac) => ac.wordId === ws.wordId);
+    // Combine per-card stats with attempt counts
+    const cardStats = perCardStats.map((cs) => {
+      const attemptData = attemptCounts.find((ac) => ac.cardId === cs.cardId);
       return {
-        ...ws,
+        ...cs,
         totalAttempts: attemptData?.totalAttempts || 0,
         passes: attemptData?.passes || 0,
         accuracy:
@@ -108,7 +108,7 @@ export async function GET(request: NextRequest) {
         accuracyLast7Days: Math.round(accuracyLast7Days * 100),
         averageInterval: srStats.averageInterval,
       },
-      wordStats,
+      cardStats,
       dailyAccuracy,
     });
   } catch (error) {

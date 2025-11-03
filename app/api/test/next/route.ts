@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
-import { word, userWord } from "@/lib/db/schema";
+import { card, userCard } from "@/lib/db/schema";
 import { eq, and, sql, inArray } from "drizzle-orm";
 import { getDueWords } from "@/lib/spaced-repetition";
 
@@ -29,17 +29,17 @@ export async function GET(request: NextRequest) {
     // Get queued words (not already due)
     const queuedWords = await db
       .select({
-        id: word.id,
-        term: word.term,
-        partOfSpeech: word.partOfSpeech,
+        id: card.id,
+        term: card.term,
+        partOfSpeech: card.partOfSpeech,
       })
-      .from(word)
+      .from(card)
       .innerJoin(
-        userWord,
+        userCard,
         and(
-          eq(word.id, userWord.wordId),
-          eq(userWord.userId, userId),
-          eq(userWord.inTestQueue, true)
+          eq(card.id, userCard.cardId),
+          eq(userCard.userId, userId),
+          eq(userCard.inTestQueue, true)
         )
       )
       .limit(limit);
@@ -48,12 +48,12 @@ export async function GET(request: NextRequest) {
     const dueWordsDetails = dueWordIds.length > 0
       ? await db
           .select({
-            id: word.id,
-            term: word.term,
-            partOfSpeech: word.partOfSpeech,
+            id: card.id,
+            term: card.term,
+            partOfSpeech: card.partOfSpeech,
           })
-          .from(word)
-          .where(inArray(word.id, dueWordIds))
+          .from(card)
+          .where(inArray(card.id, dueWordIds))
       : [];
 
     // Combine: due words first, then queued words (avoiding duplicates)

@@ -9,7 +9,7 @@
 import './load-env';
 
 import { db } from '@/lib/db';
-import { word, definition } from '@/lib/db/schema';
+import { card, definition } from '@/lib/db/schema';
 import { eq, notInArray, sql } from 'drizzle-orm';
 import { LLMLLMScraper } from '@/lib/scrapers/llm-scraper';
 import type { ScrapedWord } from '@/lib/scrapers/scraper-types';
@@ -40,43 +40,43 @@ async function testLLMScraper() {
   console.log(`🔧 Initialized scraper: ${llmScraper.name}\n`);
 
   try {
-    // Get all words from database
-    const allWords = await db.select().from(word);
-    stats.totalWords = allWords.length;
-    console.log(`📚 Total words in database: ${stats.totalWords}`);
+    // Get all cards from database
+    const allCards = await db.select().from(card);
+    stats.totalWords = allCards.length;
+    console.log(`📚 Total cards in database: ${stats.totalWords}`);
 
-    // Get words that already have definitions from any source
-    const wordsWithDefs = await db
-      .selectDistinct({ wordId: definition.wordId })
+    // Get cards that already have definitions from any source
+    const cardsWithDefs = await db
+      .selectDistinct({ cardId: definition.cardId })
       .from(definition);
     
-    const wordIdsWithDefs = new Set(wordsWithDefs.map(w => w.wordId));
-    stats.wordsWithDefinitions = wordIdsWithDefs.size;
+    const cardIdsWithDefs = new Set(cardsWithDefs.map(w => w.cardId));
+    stats.wordsWithDefinitions = cardIdsWithDefs.size;
 
-    // Filter words without definitions
-    const wordsWithoutDefs = allWords.filter(w => !wordIdsWithDefs.has(w.id));
-    stats.wordsWithoutDefinitions = wordsWithoutDefs.length;
+    // Filter cards without definitions
+    const cardsWithoutDefs = allCards.filter(w => !cardIdsWithDefs.has(w.id));
+    stats.wordsWithoutDefinitions = cardsWithoutDefs.length;
 
-    console.log(`✅ Words already have definitions: ${stats.wordsWithDefinitions}`);
-    console.log(`❌ Words needing definitions: ${stats.wordsWithoutDefinitions}\n`);
+    console.log(`✅ Cards already have definitions: ${stats.wordsWithDefinitions}`);
+    console.log(`❌ Cards needing definitions: ${stats.wordsWithoutDefinitions}\n`);
 
-    if (wordsWithoutDefs.length === 0) {
-      console.log('🎉 All words already have definitions!');
+    if (cardsWithoutDefs.length === 0) {
+      console.log('🎉 All cards already have definitions!');
       return stats;
     }
 
-    console.log(`🚀 Starting LLM scraper for ${wordsWithoutDefs.length} words...\n`);
+    console.log(`🚀 Starting LLM scraper for ${cardsWithoutDefs.length} cards...\n`);
 
-    // Process each word without a definition
-    for (let i = 0; i < wordsWithoutDefs.length; i++) {
-      const currentWord = wordsWithoutDefs[i];
-      const progress = `[${i + 1}/${wordsWithoutDefs.length}]`;
+    // Process each card without a definition
+    for (let i = 0; i < cardsWithoutDefs.length; i++) {
+      const currentCard = cardsWithoutDefs[i];
+      const progress = `[${i + 1}/${cardsWithoutDefs.length}]`;
 
-      console.log(`${progress} 🧠 Testing LLM scraper for "${currentWord.term}"...`);
+      console.log(`${progress} 🧠 Testing LLM scraper for "${currentCard.term}"...`);
 
       try {
         // Use LLM scraper directly
-        const scraperResult = await llmScraper.scrape(currentWord.term);
+        const scraperResult = await llmScraper.scrape(currentCard.term);
 
         if (!scraperResult.success || !scraperResult.data) {
           console.log(`  ❌ LLM scraper failed: ${scraperResult.error}`);
@@ -94,7 +94,7 @@ async function testLLMScraper() {
         for (const meaning of scrapedData.meanings) {
           for (const def of meaning.definitions) {
             await db.insert(definition).values({
-              wordId: currentWord.id,
+              cardId: currentCard.id,
               definition: def.definition,
               example: def.example || null,
               partOfSpeech: meaning.partOfSpeech,
@@ -112,14 +112,14 @@ async function testLLMScraper() {
         console.log(`  💾 Saved ${rank - 1} definition(s) to database`);
 
         // Add delay to avoid rate limiting with OpenAI API
-        if (i < wordsWithoutDefs.length - 1) {
+        if (i < cardsWithoutDefs.length - 1) {
           const delay = 2000; // 2 seconds between requests
           console.log(`  ⏳ Waiting ${delay/1000}s before next request...\n`);
           await new Promise(resolve => setTimeout(resolve, delay));
         }
 
       } catch (error) {
-        console.error(`  💥 Error processing "${currentWord.term}":`, error);
+        console.error(`  💥 Error processing "${currentCard.term}":`, error);
         stats.failed++;
       }
     }
@@ -128,13 +128,13 @@ async function testLLMScraper() {
     console.log('\n' + '='.repeat(70));
     console.log('📊 LLM Scraper Test Results:');
     console.log('='.repeat(70));
-    console.log(`Total words in database: ${stats.totalWords}`);
-    console.log(`Words with definitions (before): ${stats.wordsWithDefinitions}`);
-    console.log(`Words processed by LLM scraper: ${stats.wordsWithoutDefinitions}`);
+    console.log(`Total cards in database: ${stats.totalWords}`);
+    console.log(`Cards with definitions (before): ${stats.wordsWithDefinitions}`);
+    console.log(`Cards processed by LLM scraper: ${stats.wordsWithoutDefinitions}`);
     console.log(`✅ Definitions added: ${stats.definitionsAdded}`);
     console.log(`❌ Failed: ${stats.failed}`);
     console.log(`⏭️  Skipped: ${stats.skipped}`);
-    console.log(`Words with definitions (after): ${stats.wordsWithDefinitions + stats.definitionsAdded}`);
+    console.log(`Cards with definitions (after): ${stats.wordsWithDefinitions + stats.definitionsAdded}`);
     console.log('='.repeat(70));
 
     // Success rate

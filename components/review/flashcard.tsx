@@ -18,15 +18,18 @@ interface FlashcardProps {
   wordId: number;
   partOfSpeech?: string | null;
   inTestQueue?: boolean;
-  onQueueUpdate?: () => void;
+  stackId?: number;
+  definition?: string;
+  onQueueUpdate?: (wordId: number, inQueue: boolean) => void;
   onFlip?: () => void;
+  onReviewUpdate?: (wordId: number) => void;
 }
 
 export interface FlashcardRef {
   flip: () => void;
 }
 
-export const Flashcard = forwardRef<FlashcardRef, FlashcardProps>(({ word, wordId, partOfSpeech, inTestQueue = false, onQueueUpdate, onFlip }, ref) => {
+export const Flashcard = forwardRef<FlashcardRef, FlashcardProps>(({ word, wordId, partOfSpeech, inTestQueue = false, stackId, definition: propDefinition, onQueueUpdate, onFlip, onReviewUpdate }, ref) => {
   const [isFlipped, setIsFlipped] = useState(false);
   const [definition, setDefinition] = useState<Definition | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -39,6 +42,13 @@ export const Flashcard = forwardRef<FlashcardRef, FlashcardProps>(({ word, wordI
     setIsLoading(false);
     setError(null);
   }, [wordId]);
+
+  // Initialize definition from props if available
+  useEffect(() => {
+    if (propDefinition) {
+      setDefinition({ definition: propDefinition });
+    }
+  }, [propDefinition]);
 
   // Expose flip function to parent via ref
   useImperativeHandle(ref, () => ({
@@ -58,7 +68,7 @@ export const Flashcard = forwardRef<FlashcardRef, FlashcardProps>(({ word, wordI
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ wordId }),
+          body: JSON.stringify({ cardId: wordId, stackId }),
         });
       } catch (error) {
         console.error("Error marking card as reviewed:", error);
@@ -66,8 +76,8 @@ export const Flashcard = forwardRef<FlashcardRef, FlashcardProps>(({ word, wordI
       }
     }
 
-    // Fetch definition when flipping to back (if not already loaded)
-    if (newFlipState && !definition && !isLoading) {
+    // Fetch definition when flipping to back (if not already loaded and no prop definition)
+    if (newFlipState && !definition && !isLoading && !propDefinition) {
       setIsLoading(true);
       setError(null);
 
@@ -95,10 +105,10 @@ export const Flashcard = forwardRef<FlashcardRef, FlashcardProps>(({ word, wordI
   };
 
   return (
-    <div className="perspective-1000 w-full">
+    <div className="perspective-1000 w-full max-w-2xl mx-auto">
       <Card
         className={cn(
-          "relative h-[400px] cursor-pointer transition-transform duration-500 transform-style-3d",
+          "relative h-[500px] md:h-[600px] cursor-pointer transition-transform duration-500 transform-style-3d",
           isFlipped && "rotate-y-180"
         )}
         onClick={handleFlip}
@@ -113,6 +123,7 @@ export const Flashcard = forwardRef<FlashcardRef, FlashcardProps>(({ word, wordI
         >
           <AddToTestCheckbox
             wordId={wordId}
+            stackId={stackId}
             initialChecked={inTestQueue}
             onToggle={onQueueUpdate}
           />

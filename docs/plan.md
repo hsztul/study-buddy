@@ -1,14 +1,13 @@
 # StudyBuddy Implementation Plan
 
-**Last Updated:** Oct 18, 2025 - 3:00 PM  
-**Scope:** Phase 0 (Prototype) + Phase 1 (MVP)  
+**Last Updated:** Oct 31, 2025 - 4:00 PM  
+**Scope:** Phase 2 (Multi-Stack Architecture) - Major Re-architecture  
 **Tech Stack:** Next.js 15, TypeScript, Drizzle ORM, Neon Postgres, Clerk Auth, Vercel AI SDK, Tailwind CSS, ShadCN UI, Lucide Icons
 
-**Progress:** 15/21 sections complete (71%)
-- ✅ Phase 0: 10/10 complete (100%)
-- ✅ Phase 1 Core: 5/11 complete (MVP ready!)
-  - Sections 1.1-1.5 complete
-  - Sections 1.6-1.11 are polish/deployment tasks
+**Progress:** Starting Phase 2 - Multi-Stack Card System
+- ✅ Phase 0: Complete
+- ✅ Phase 1: Complete (MVP)
+- 🚧 Phase 2: In Progress - Multi-stack architecture with custom card creation
 
 ---
 
@@ -590,6 +589,243 @@ Building a mobile-first PWA for SAT vocabulary learning with voice-based testing
 
 ### Next Steps
 Start with section 0.1 (Project Setup & Dependencies) and work sequentially through the plan. Update status to "In Progress" when starting a section and "Complete" when finished.
+
+---
+
+## Phase 2: Multi-Stack Architecture
+
+### 2.1 Database Schema Re-architecture
+**Status:** In Progress
+
+**Tasks:**
+- [ ] Create new schema with `card_stack`, `card`, `user_card` tables
+- [ ] Update `definition` table to reference `card` instead of `word`
+- [ ] Update `attempt` table to include `stack_id` and reference `card`
+- [ ] Update `user_daily_stats` to be per-stack
+- [ ] Add proper indexes for stack-based queries
+- [ ] Generate migration SQL
+
+**Files to Create/Update:**
+- `lib/db/schema.ts` - Complete schema rewrite
+- `drizzle/migrations/` - New migration files
+
+**Key Changes:**
+- `word` table → `card` table (belongs to stack)
+- `user_word` → `user_card` (includes stack_id)
+- New `card_stack` table with `is_protected` flag
+- All queries now scoped by stack
+
+---
+
+### 2.2 Data Migration & SAT Vocab Stack Creation
+**Status:** Pending
+
+**Tasks:**
+- [ ] Create migration script to:
+  - Create default "SAT Vocabulary" stack for all users
+  - Migrate existing words to cards in SAT stack
+  - Preserve user progress (or wipe if too complex)
+  - Set `is_protected = true` for SAT stack
+- [ ] Test migration on development database
+- [ ] Run migration on production
+
+**Files to Create:**
+- `scripts/migrate-to-stacks.ts` - Migration script
+- Use Neon MCP to execute migration
+
+---
+
+### 2.3 Stack Management API Routes
+**Status:** Pending
+
+**Tasks:**
+- [ ] `GET /api/stacks` - List user's card stacks
+- [ ] `POST /api/stacks` - Create new stack
+- [ ] `GET /api/stacks/[id]` - Get stack details
+- [ ] `PATCH /api/stacks/[id]` - Update stack name
+- [ ] `DELETE /api/stacks/[id]` - Delete stack (check not protected)
+- [ ] `GET /api/stacks/[id]/cards` - Get cards in stack
+- [ ] `POST /api/stacks/[id]/cards` - Create card in stack
+- [ ] `PATCH /api/stacks/[id]/cards/[cardId]` - Update card
+- [ ] `DELETE /api/stacks/[id]/cards/[cardId]` - Delete card
+
+**Files to Create:**
+- `app/api/stacks/route.ts`
+- `app/api/stacks/[id]/route.ts`
+- `app/api/stacks/[id]/cards/route.ts`
+- `app/api/stacks/[id]/cards/[cardId]/route.ts`
+
+---
+
+### 2.4 Update Existing API Routes
+**Status:** Pending
+
+**Tasks:**
+- [ ] Update `/api/words` → `/api/stacks/[id]/cards` (deprecated)
+- [ ] Update `/api/review/queue` to be stack-scoped
+- [ ] Update `/api/test/next` to be stack-scoped
+- [ ] Update `/api/test/attempt` to include stack_id
+- [ ] Update `/api/stats/overview` to support per-stack and global stats
+- [ ] Update `/api/my-cards` to be stack-scoped
+
+**Files to Update:**
+- All existing API route files
+
+---
+
+### 2.5 My Stacks Page (Home)
+**Status:** Pending
+
+**Tasks:**
+- [ ] Create "My Stacks" page as new home
+- [ ] Grid/list view of all stacks
+- [ ] Show stack stats (card count, due count, last studied)
+- [ ] Special badge for SAT Vocabulary stack
+- [ ] Empty state with "Create Stack" CTA
+- [ ] Click stack to enter stack view
+
+**Files to Create:**
+- `app/(app)/stacks/page.tsx` - My Stacks home
+- `components/stacks/stack-card.tsx` - Stack display card
+- `components/stacks/stack-list.tsx` - Stack list component
+
+---
+
+### 2.6 Create/Edit Stack UI
+**Status:** Pending
+
+**Tasks:**
+- [ ] Create stack modal/page
+- [ ] Stack name input with validation
+- [ ] Card creation form (term + definition)
+- [ ] Add multiple cards in one session
+- [ ] Edit stack page (for custom stacks only)
+- [ ] Edit/delete individual cards
+- [ ] Prevent editing SAT vocab stack
+
+**Files to Create:**
+- `app/(app)/stacks/new/page.tsx` - Create stack
+- `app/(app)/stacks/[id]/edit/page.tsx` - Edit stack
+- `components/stacks/create-stack-modal.tsx`
+- `components/stacks/card-form.tsx`
+- `components/ui/dialog.tsx` - ShadCN dialog component
+
+---
+
+### 2.7 Stack View with 4 Tabs
+**Status:** Pending
+
+**Tasks:**
+- [ ] Create stack layout with 4 tabs: Review, Test, Tutor, Stats
+- [ ] Tab navigation component
+- [ ] Stack context provider (pass stack ID to all tabs)
+- [ ] Header shows stack name and back button
+- [ ] Responsive tab layout (bottom on mobile, top on desktop)
+
+**Files to Create:**
+- `app/(app)/stacks/[id]/layout.tsx` - Stack layout with tabs
+- `app/(app)/stacks/[id]/review/page.tsx` - Review tab
+- `app/(app)/stacks/[id]/test/page.tsx` - Test tab
+- `app/(app)/stacks/[id]/tutor/page.tsx` - Tutor tab (placeholder)
+- `app/(app)/stacks/[id]/stats/page.tsx` - Stats tab
+- `components/stacks/stack-tabs.tsx` - Tab navigation
+
+---
+
+### 2.8 Update Review Mode for Stacks
+**Status:** Pending
+
+**Tasks:**
+- [ ] Update Review page to work with stack context
+- [ ] Fetch cards from `/api/stacks/[id]/cards`
+- [ ] Update "Add to Test" to be stack-scoped
+- [ ] Show stack name in header
+- [ ] Update progress tracking per stack
+
+**Files to Update:**
+- `app/(app)/stacks/[id]/review/page.tsx`
+- `components/review/*` - Update to use card instead of word
+
+---
+
+### 2.9 Update Test Mode for Stacks
+**Status:** Pending
+
+**Tasks:**
+- [ ] Update Test page to work with stack context
+- [ ] Fetch test queue from stack-scoped API
+- [ ] Update attempt submission to include stack_id
+- [ ] Show stack name in header
+- [ ] Update SR logic to be per-stack
+
+**Files to Update:**
+- `app/(app)/stacks/[id]/test/page.tsx`
+- `components/test/*` - Update to use card instead of word
+- `lib/spaced-repetition.ts` - Update for stack context
+
+---
+
+### 2.10 Stack Stats Page
+**Status:** Pending
+
+**Tasks:**
+- [ ] Create stats page per stack
+- [ ] Overview tiles (total cards, reviewed, tested, due, accuracy)
+- [ ] Card list with search/filter/sort
+- [ ] Show individual card progress
+- [ ] Edit/delete buttons for custom stacks only
+
+**Files to Create:**
+- `app/(app)/stacks/[id]/stats/page.tsx`
+- `components/stacks/stack-stats-tiles.tsx`
+- `components/stacks/stack-card-list.tsx`
+
+---
+
+### 2.11 Update Navigation & Header
+**Status:** Pending
+
+**Tasks:**
+- [ ] Remove old nav tabs (Review, Test, My Cards)
+- [ ] Add "Create Stack" button to header
+- [ ] Update app layout to redirect to /stacks (My Stacks)
+- [ ] Update landing page to reflect multi-stack feature
+
+**Files to Update:**
+- `components/layout/header.tsx`
+- `components/layout/nav.tsx` (or remove)
+- `app/(app)/layout.tsx`
+- `app/(marketing)/page.tsx`
+
+---
+
+### 2.12 Update Profile for Global Stats
+**Status:** Pending
+
+**Tasks:**
+- [ ] Update profile to show global stats across all stacks
+- [ ] List all stacks with quick stats
+- [ ] Update stats API to aggregate across stacks
+
+**Files to Update:**
+- `app/(app)/profile/page.tsx`
+- `app/api/stats/overview/route.ts`
+
+---
+
+### 2.13 Testing & Cleanup
+**Status:** Pending
+
+**Tasks:**
+- [ ] Test complete flow: create stack → add cards → review → test
+- [ ] Test SAT vocab stack protection (can't edit/delete)
+- [ ] Test stack deletion (cascades properly)
+- [ ] Remove old unused code (word-based routes)
+- [ ] Update README with new architecture
+
+**Files to Update:**
+- `README.md`
+- Remove deprecated files
 
 ---
 

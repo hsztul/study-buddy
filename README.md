@@ -1,13 +1,16 @@
 # StudyBuddy
 
-A mobile-first PWA for SAT vocabulary learning with voice-based testing.
+A mobile-first PWA for vocabulary learning with custom card stacks and voice-based testing.
 
 ## Features
 
-- 📚 **Review Mode**: Swipe through flashcards with 384 SAT words
-- 🎤 **Test Mode**: Speak definitions and get AI-powered feedback
-- 🧠 **Spaced Repetition**: Smart scheduling to optimize learning
-- 📊 **Progress Tracking**: Monitor your accuracy and mastery
+- 🗂️ **Custom Card Stacks**: Create unlimited stacks to organize your study materials
+- 📚 **Review Mode**: Swipe through flashcards with intuitive gestures
+- 🎤 **Test Mode**: Speak definitions and get AI-powered feedback (coming soon)
+- 💬 **AI Tutor**: Chat with an AI to understand difficult concepts (coming soon)
+- 📊 **Stack Statistics**: Track progress per stack with detailed analytics
+- 🛡️ **Protected SAT Vocab**: Default stack with 384 SAT words (cannot be edited)
+- 🧠 **Spaced Repetition**: Smart scheduling per stack to optimize learning
 - 🔐 **Secure Auth**: Sign in with Google via Clerk
 - 📱 **PWA**: Install on any device for offline access
 

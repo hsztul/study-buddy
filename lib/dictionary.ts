@@ -5,7 +5,8 @@
 
 import { scraperManager } from './scrapers/scraper-manager';
 import type { ScrapedWord } from './scrapers/scraper-types';
-import { db, definition, word as wordTable } from './db';
+import { db } from './db';
+import { definition, card } from './db/schema';
 import { eq, sql } from 'drizzle-orm';
 import type { Definition } from './db/schema';
 
@@ -58,15 +59,15 @@ export async function fetchDefinition(
 
   // L2: Check database cache (case-insensitive)
   try {
-    const wordRecord = await db.query.word.findFirst({
-      where: sql`LOWER(${wordTable.term}) = LOWER(${normalizedWord})`,
+    const cardRecord = await db.query.card.findFirst({
+      where: sql`LOWER(${card.term}) = LOWER(${normalizedWord})`,
       with: {
         definitions: true,
       },
     });
 
-    if (wordRecord?.definitions && wordRecord.definitions.length > 0) {
-      const dbDefs = wordRecord.definitions;
+    if (cardRecord?.definitions && cardRecord.definitions.length > 0) {
+      const dbDefs = cardRecord.definitions;
       const cachedAt = dbDefs[0]?.cachedAt;
       
       // Check if DB cache is still valid
@@ -116,19 +117,19 @@ export async function saveDefinitionsToDb(
   scrapedData: ScrapedWord
 ): Promise<void> {
   try {
-    // Find the word record (case-insensitive search)
+    // Find the card record (case-insensitive search)
     const normalizedTerm = wordTerm.trim();
-    const wordRecord = await db.query.word.findFirst({
-      where: sql`LOWER(${wordTable.term}) = LOWER(${normalizedTerm})`,
+    const cardRecord = await db.query.card.findFirst({
+      where: sql`LOWER(${card.term}) = LOWER(${normalizedTerm})`,
     });
 
-    if (!wordRecord) {
+    if (!cardRecord) {
       console.warn(`[Dictionary] Cannot save definitions: word "${wordTerm}" not found in database`);
       return;
     }
 
-    // Delete old cached definitions for this word (if any)
-    await db.delete(definition).where(eq(definition.wordId, wordRecord.id));
+    // Delete old cached definitions for this card (if any)
+    await db.delete(definition).where(eq(definition.cardId, cardRecord.id));
 
     // Prepare new definitions
     const newDefinitions: typeof definition.$inferInsert[] = [];
@@ -137,7 +138,7 @@ export async function saveDefinitionsToDb(
     for (const meaning of scrapedData.meanings) {
       for (const def of meaning.definitions) {
         newDefinitions.push({
-          wordId: wordRecord.id,
+          cardId: cardRecord.id,
           definition: def.definition,
           example: def.example || null,
           partOfSpeech: meaning.partOfSpeech,

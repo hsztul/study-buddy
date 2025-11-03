@@ -6,9 +6,11 @@
 
 ## 1) One-liner & Goal
 
-**StudyBuddy** is a mobile-first PWA that lets students *talk* to an AI buddy to master SAT vocabulary. Users review with flashcards and then enter **Test Mode** where they **speak definitions**; the app transcribes via **Whisper** and grades with **gpt-5-nano**. We track per-word pass/fail and simple spaced repetition to prioritize weak items.
+**StudyBuddy** is a mobile-first PWA that lets students *talk* to an AI buddy to master vocabulary through custom card stacks. Users create and organize card stacks, review with flashcards, and then enter **Test Mode** where they **speak definitions**; the app transcribes via **Whisper** and grades with **gpt-5-nano**. We track per-card pass/fail and simple spaced repetition to prioritize weak items.
 
-**Primary goal (Phase 1):** Deliver a delightful, fast, voice-first study flow for SAT vocab with clear progress and personalized feedback.
+**Primary goal (Phase 1):** Deliver a delightful, fast, voice-first study flow with custom card stacks, clear progress tracking per stack, and personalized feedback.
+
+**Key Feature:** Users can create unlimited custom card stacks. Every user starts with a protected "SAT Vocabulary" stack (384 words) that cannot be edited or deleted.
 
 ---
 
@@ -28,22 +30,27 @@
 ### In-Scope (Phase 1)
 
 * PWA (installable) with mobile portrait-first layout; responsive desktop layout.
-* **Two modes**: Review (free flip/swipe) & Test (voice, SR, grading).
-* Word list import (JSON → Neon Postgres) + **lazy-load definitions on-demand** via `dictionaryapi.dev` (cached 24h).
-* Simple spaced repetition (SR) in **Test Mode** (see §10).
+* **Card Stack Management**: Create, edit, delete custom card stacks (unlimited).
+* **Protected SAT Vocab Stack**: Default stack with 384 SAT words (cannot be edited/deleted).
+* **Four modes per stack**: Review (flip/swipe), Test (voice, SR, grading), Tutor (AI chat), Stats (progress tracking).
+* **Custom Card Creation**: Users can create cards with front (term) and back (definition) within any custom stack.
+* Word list import for SAT vocab (JSON → Neon Postgres) + **lazy-load definitions on-demand** via `dictionaryapi.dev` (cached 7 days).
+* Simple spaced repetition (SR) per stack in **Test Mode** (see §10).
 * Auth with **Clerk** (Google; email OTP fallback optional in Phase 2).
-* Stats roll-ups per word and user (accuracy, attempts, last seen).
+* Stats roll-ups per card and stack (accuracy, attempts, last seen).
 * Clear permission education & microphone gating.
-* Profile page (name, email, sign out, stats).
+* Profile page (name, email, sign out, global stats).
 * Basic SEO & Logged-out landing page with CTA.
 
 ### Out-of-Scope (Phase 1)
 
 * Multiplayer / tutor dashboards.
-* Custom decks & shared lists.
+* Shared card stacks / collaborative editing.
+* Stack templates or importing from external sources (Quizlet, Anki).
 * Advanced SR algorithms (SM-2, FSRS).
 * iOS/Android native shells.
 * Gamification (streaks, XP) beyond very light badges.
+* Stack archiving (only deletion supported).
 
 ---
 
@@ -54,23 +61,37 @@
   * As a new user, I can sign in with Google (Clerk) and see a short explainer of Review vs Test.
   * As a user, I’m prompted *why* the mic is needed **before** the browser permission dialog, and the app clearly won’t proceed to Test without it.
 
-* **Review Mode**
+* **Card Stack Management**
 
-  * As a user, I can swipe/flip flashcards (word ↔ definition), mark a word with a **“Test me” checkbox** to add it to my Test queue, and move freely within the deck.
-  * I can see **where I am** in the deck and overall counts (reviewed, added-to-test).
+  * As a user, I can create new card stacks with custom names.
+  * As a user, I can view all my card stacks on a "My Stacks" page.
+  * As a user, I can delete custom card stacks (but not the SAT Vocabulary stack).
+  * As a user, I can create cards within my custom stacks by entering a term (front) and definition (back).
+  * As a user, I can edit or delete individual cards within my custom stacks.
 
-* **Test Mode**
+* **Review Mode (Per Stack)**
 
-  * As a user, I select a set of words (default: my “Test me” set + SR-due words) and **speak the definition** when prompted with a word.
+  * As a user, I can select a card stack and enter Review mode for that stack.
+  * As a user, I can swipe/flip flashcards (term ↔ definition), mark a card with a **"Test me" checkbox** to add it to that stack's Test queue.
+  * I can see **where I am** in the stack and overall counts (reviewed, added-to-test).
+  * Cards from different stacks never mix in a single review session.
+
+* **Test Mode (Per Stack)**
+
+  * As a user, I select a card stack and enter Test mode for that stack.
+  * As a user, I test on cards from my "Test me" queue + SR-due cards (within that stack only).
+  * As a user, I **speak the definition** when prompted with a term.
   * I see near-real-time feedback: **Pass/Retry**, a short tip/mnemonic, and a confidence score.
   * I can long-press or tap to hear the **correct definition** (TTS optional Phase 2).
   * If Whisper fails/low-confidence, I get a clean retry with guidance.
+  * SR scheduling and test queues are isolated per stack.
 
-* **My Cards & Profile**
+* **Stack Stats & Profile**
 
-  * As a user, I can view all cards I've reviewed or tested on in "My Cards" with search and filter options.
-  * I can remove cards from my reviewed list (but not tested cards).
-  * I can access my Profile by clicking my avatar to see stats and account settings.
+  * As a user, I can view stats for each card stack (cards reviewed, tested, accuracy, due today).
+  * As a user, I can view individual card progress within a stack.
+  * As a user, I can access my Profile by clicking my avatar to see global stats and account settings.
+  * As a user, I can see aggregated stats across all my stacks on my profile.
 
 ---
 
@@ -84,9 +105,11 @@
 
 * **Portrait (primary):**
 
-  * **Header:** App name/logo, nav (Review, Test, My Cards), user avatar (Clerk - links to Profile).
-  * **Main:** Progress strip (position in deck / due words), mode toggle (Review/Test), card stack.
-* **Desktop:** Two-column: left = card; right = tips, stats, queue list.
+  * **Header:** App name/logo, "Create Stack" button, user avatar (Clerk - links to Profile).
+  * **Main Navigation:** My Stacks (home) - shows all card stacks.
+  * **Stack View:** When a stack is selected, show 4 tabs: Review, Test, Tutor, Stats.
+  * **Stack Context:** All modes operate within the selected stack context.
+* **Desktop:** Two-column: left = card/content; right = tips, stats, queue list.
 
 ### Landing (logged-out)
 
@@ -94,44 +117,66 @@
 * Feature tiles (Voice testing • Smart repetition • Track progress)
 * CTA buttons: **Sign up** / **Log in** (Clerk).
 
-### Review Mode Screen
+### My Stacks Screen (Home)
 
-* Card shows **Word** front → flip to **primary definition** (+ examples if available).
+* Grid/list view of all card stacks.
+* Each stack shows: name, card count, cards due, last studied.
+* SAT Vocabulary stack has a special badge ("Protected").
+* "+ Create Stack" button in header.
+* Tap a stack to enter stack view with 4 tabs.
+
+### Review Mode Screen (Per Stack)
+
+* Card shows **Term** front → flip to **definition** (+ examples if SAT vocab).
 * Controls: **Add to Test** checkbox, swipe left/right; mini-map (n/N).
-* Action row: “Shuffle”, “Select All for Test”, filter (All / Marked / New).
+* Action row: "Shuffle", "Select All for Test", filter (All / Marked / New).
+* Stack name shown in header for context.
 
-### Test Mode Screen
+### Test Mode Screen (Per Stack)
 
-* Pre-test modal: “You’ll speak definitions. We transcribe and grade. Allow mic?”
+* Pre-test modal: "You'll speak definitions. We transcribe and grade. Allow mic?"
 
-  * Inline explainer: “We only record locally to transcribe this session.” (see Privacy)
+  * Inline explainer: "We only record locally to transcribe this session." (see Privacy)
   * Button → mic permission flow.
-* Card shows **Word** big & bold; below, **Record** button (hold-to-talk & tap-to-toggle both supported).
-* After stop: show “Transcribing… → Grading…” loader.
+* Card shows **Term** big & bold; below, **Record** button (hold-to-talk & tap-to-toggle both supported).
+* After stop: show "Transcribing… → Grading…" loader.
 * Result state:
 
-  * **Pass:** green check, short praise line, “Next”
-  * **Almost:** neutral highlight, show key missing elements, “Retry”
+  * **Pass:** green check, short praise line, "Next"
+  * **Almost:** neutral highlight, show key missing elements, "Retry"
   * **Fail:** gentle nudge, show concise definition & **mnemonic** tip
-* Footer: Next due count, accuracy %, session streak, **End Session**.
+* Footer: Next due count (in this stack), accuracy %, session streak, **End Session**.
+* Stack name shown in header for context.
 
 ### Permission UX
 
 * Before calling `getUserMedia`, show inline sheet: why mic is needed, privacy statement, a preview of what happens, then “Continue”. If denied, show retry instructions with browser-specific help.
 
-### My Cards Screen
+### Stack Stats Screen (Per Stack)
 
-* Search bar to filter through reviewed and tested cards.
+* Overview tiles: Total cards, Reviewed, Tested, Due today, Accuracy.
+* Search bar to filter through cards in this stack.
 * Card list with status indicators: Reviewed (flipped), Tested (right/wrong), and test count.
 * Filter options: All | Reviewed Only | Tested Only | Correct Only | Incorrect Only.
-* Remove button for reviewed cards (tested cards cannot be removed).
+* For custom stacks: Edit/Delete buttons on individual cards.
+* For SAT vocab: Cards are read-only.
 * Sort options: Recently reviewed | Recently tested | Alphabetical | Accuracy.
+
+### Create/Edit Stack Screen
+
+* Stack name input (required).
+* Card creation form: Term (front) + Definition (back).
+* Add multiple cards in one session.
+* Edit existing cards (custom stacks only).
+* Delete cards (custom stacks only).
 
 ### Profile
 
-* Avatar, Name (editable), Email (read-only), Sign out, quick stats tiles:
+* Avatar, Name (editable), Email (read-only), Sign out.
+* Global stats tiles:
 
-  * Words studied, Accuracy last 7 days, Due today.
+  * Total stacks, Total cards studied, Overall accuracy last 7 days, Total cards due today.
+* List of all stacks with quick stats per stack.
 
 ---
 
@@ -171,17 +216,32 @@ CREATE TABLE user_profile (
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
-CREATE TABLE word (
+-- Card stacks (collections of cards)
+CREATE TABLE card_stack (
   id SERIAL PRIMARY KEY,
-  term TEXT NOT NULL UNIQUE,
-  part_of_speech TEXT,
-  source TEXT DEFAULT 'sat_base'
+  user_id TEXT REFERENCES user_profile(user_id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  is_protected BOOLEAN DEFAULT FALSE,  -- true for SAT Vocab (can't edit/delete)
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
 );
 
--- Word definitions - cached from dictionary API with full metadata
+-- Cards (terms + definitions) - belongs to a stack
+CREATE TABLE card (
+  id SERIAL PRIMARY KEY,
+  stack_id INT REFERENCES card_stack(id) ON DELETE CASCADE,
+  term TEXT NOT NULL,
+  definition TEXT NOT NULL,            -- user-provided or from dictionary
+  part_of_speech TEXT,                 -- only for SAT vocab
+  source TEXT DEFAULT 'user',          -- 'user' | 'sat_base'
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- Cached definitions for SAT vocab words (from dictionary API)
 CREATE TABLE definition (
   id SERIAL PRIMARY KEY,
-  word_id INT REFERENCES word(id) ON DELETE CASCADE,
+  card_id INT REFERENCES card(id) ON DELETE CASCADE,
   definition TEXT NOT NULL,
   example TEXT,
   part_of_speech TEXT NOT NULL,
@@ -193,10 +253,11 @@ CREATE TABLE definition (
   cached_at TIMESTAMPTZ DEFAULT now()
 );
 
--- User ↔ Word mastery record (SR + accuracy)
-CREATE TABLE user_word (
+-- User ↔ Card mastery record (SR + accuracy) - per stack
+CREATE TABLE user_card (
   user_id TEXT REFERENCES user_profile(user_id) ON DELETE CASCADE,
-  word_id INT REFERENCES word(id) ON DELETE CASCADE,
+  card_id INT REFERENCES card(id) ON DELETE CASCADE,
+  stack_id INT REFERENCES card_stack(id) ON DELETE CASCADE,
   in_test_queue BOOLEAN DEFAULT FALSE,
   ease REAL DEFAULT 2.5,               -- for future SR algorithms
   interval_days INT DEFAULT 0,
@@ -207,13 +268,14 @@ CREATE TABLE user_word (
   has_reviewed BOOLEAN DEFAULT FALSE,  -- user has flipped the card
   first_reviewed_at TIMESTAMPTZ,       -- when card was first flipped
   last_reviewed_at TIMESTAMPTZ,        -- when card was last flipped
-  PRIMARY KEY (user_id, word_id)
+  PRIMARY KEY (user_id, card_id)
 );
 
 CREATE TABLE attempt (
   id BIGSERIAL PRIMARY KEY,
   user_id TEXT REFERENCES user_profile(user_id),
-  word_id INT REFERENCES word(id),
+  card_id INT REFERENCES card(id),
+  stack_id INT REFERENCES card_stack(id),
   mode TEXT CHECK (mode IN ('test','review')),
   transcript TEXT,
   grade TEXT,                          -- 'pass'|'almost'|'fail'
@@ -223,20 +285,25 @@ CREATE TABLE attempt (
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
--- Denorm daily aggregates (for fast stats)
+-- Denorm daily aggregates per stack (for fast stats)
 CREATE TABLE user_daily_stats (
   user_id TEXT,
+  stack_id INT REFERENCES card_stack(id) ON DELETE CASCADE,
   day DATE,
   attempts INT,
   passes INT,
   fails INT,
-  UNIQUE (user_id, day)
+  UNIQUE (user_id, stack_id, day)
 );
 ```
 
 **Indexes**
 
-* `attempt(user_id, created_at desc)`, `user_word(user_id, due_on)`, `definition(word_id, rank)`
+* `card_stack(user_id)` - for fetching user's stacks
+* `card(stack_id)` - for fetching cards in a stack
+* `user_card(user_id, stack_id, due_on)` - for SR queries per stack
+* `attempt(user_id, stack_id, created_at desc)` - for stats per stack
+* `definition(card_id, rank)` - for cached definitions
 
 ---
 

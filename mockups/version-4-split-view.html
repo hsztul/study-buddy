@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudyBuddy - Split View</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #fafafa;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .navbar {
+            background: white;
+            padding: 1rem 1.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo { font-size: 1.25rem; font-weight: 700; color: #1a202c; }
+        .nav-links {
+            display: flex;
+            gap: 1.5rem;
+        }
+        .nav-link {
+            text-decoration: none;
+            color: #718096;
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+        .nav-link.active {
+            background: #edf2f7;
+            color: #667eea;
+        }
+        .container {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+            padding: 1.5rem;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+        }
+        .card-panel {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        .card-count {
+            font-size: 0.875rem;
+            color: #718096;
+        }
+        .flashcard {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 20px;
+            padding: 3rem 2rem;
+            min-height: 350px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .flashcard:active { transform: scale(0.98); }
+        .card-word {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        .card-phonetic {
+            font-size: 1rem;
+            opacity: 0.9;
+            margin-bottom: 2rem;
+        }
+        .card-def {
+            font-size: 1.125rem;
+            text-align: center;
+            line-height: 1.6;
+            opacity: 0.95;
+        }
+        .info-panel {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .stat-box {
+            background: #f7fafc;
+            padding: 1rem;
+            border-radius: 12px;
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1a202c;
+        }
+        .stat-label {
+            font-size: 0.75rem;
+            color: #718096;
+            margin-top: 0.25rem;
+        }
+        .queue-list {
+            margin-top: 1.5rem;
+        }
+        .queue-title {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #4a5568;
+            margin-bottom: 1rem;
+        }
+        .queue-item {
+            padding: 0.75rem;
+            background: #f7fafc;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .queue-word {
+            font-weight: 500;
+            color: #2d3748;
+        }
+        .queue-badge {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            background: #fed7d7;
+            color: #c53030;
+            border-radius: 6px;
+        }
+        .controls {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+        .btn {
+            flex: 1;
+            padding: 1rem;
+            border-radius: 12px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .btn:active { transform: scale(0.95); }
+        .btn-outline {
+            background: white;
+            border: 2px solid #e2e8f0;
+            color: #4a5568;
+        }
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        @media (min-width: 1024px) {
+            .container {
+                grid-template-columns: 2fr 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <div class="logo">StudyBuddy</div>
+        <div class="nav-links">
+            <a href="#" class="nav-link active">Review</a>
+            <a href="#" class="nav-link">Test</a>
+            <a href="#" class="nav-link">Profile</a>
+        </div>
+    </div>
+    <div class="container">
+        <div class="card-panel">
+            <div class="card-header">
+                <h2>Review Mode</h2>
+                <div class="card-count">Card 45 of 300</div>
+            </div>
+            <div class="flashcard">
+                <div class="card-word">Meticulous</div>
+                <div class="card-phonetic">/məˈtɪkjələs/</div>
+                <div class="card-def">
+                    Showing great attention to detail; very careful and precise
+                </div>
+            </div>
+            <div class="controls">
+                <button class="btn btn-outline">← Previous</button>
+                <button class="btn btn-outline">Add to Test</button>
+                <button class="btn btn-primary">Next →</button>
+            </div>
+        </div>
+        <div class="info-panel">
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <div class="stat-value">45</div>
+                    <div class="stat-label">Reviewed</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value">12</div>
+                    <div class="stat-label">To Test</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value">8</div>
+                    <div class="stat-label">Due Today</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value">87%</div>
+                    <div class="stat-label">Accuracy</div>
+                </div>
+            </div>
+            <div class="queue-list">
+                <div class="queue-title">Test Queue</div>
+                <div class="queue-item">
+                    <span class="queue-word">Aberration</span>
+                    <span class="queue-badge">Due</span>
+                </div>
+                <div class="queue-item">
+                    <span class="queue-word">Ephemeral</span>
+                    <span class="queue-badge">New</span>
+                </div>
+                <div class="queue-item">
+                    <span class="queue-word">Ubiquitous</span>
+                    <span class="queue-badge">Due</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -7,12 +7,14 @@ import { Loader2 } from "lucide-react";
 
 interface AddToTestCheckboxProps {
   wordId: number;
+  stackId?: number;
   initialChecked: boolean;
-  onToggle?: (checked: boolean) => void;
+  onToggle?: (wordId: number, checked: boolean) => void;
 }
 
 export function AddToTestCheckbox({
   wordId,
+  stackId,
   initialChecked,
   onToggle,
 }: AddToTestCheckboxProps) {
@@ -31,7 +33,11 @@ export function AddToTestCheckbox({
       const response = await fetch("/api/review/queue", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ wordId, add: newChecked }),
+        body: JSON.stringify({ 
+          cardId: wordId, 
+          stackId: stackId || 1, // Default to SAT stack if not provided
+          add: newChecked 
+        }),
       });
 
       if (!response.ok) {
@@ -39,7 +45,7 @@ export function AddToTestCheckbox({
       }
 
       setChecked(newChecked);
-      onToggle?.(newChecked);
+      onToggle?.(wordId, newChecked);
     } catch (error) {
       console.error("Error toggling test queue:", error);
       // Revert on error

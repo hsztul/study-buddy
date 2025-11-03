@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudyBuddy - Playful & Gamified</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Comic Sans MS', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(180deg, #fef3c7 0%, #fde68a 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .header {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 1rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #f59e0b;
+        }
+        .streak-badge {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem 1rem;
+            gap: 1.5rem;
+        }
+        .level-bar {
+            width: 100%;
+            max-width: 500px;
+            background: white;
+            border-radius: 20px;
+            padding: 1rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .level-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #92400e;
+        }
+        .xp-bar {
+            height: 12px;
+            background: #fef3c7;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .xp-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #f59e0b 0%, #d97706 100%);
+            width: 65%;
+            border-radius: 10px;
+            transition: width 0.5s ease;
+        }
+        .card-area {
+            width: 100%;
+            max-width: 500px;
+            position: relative;
+        }
+        .flashcard-fun {
+            background: white;
+            border-radius: 24px;
+            padding: 2.5rem 2rem;
+            min-height: 400px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border: 4px solid #fbbf24;
+            position: relative;
+            transform: rotate(-1deg);
+            transition: transform 0.3s ease;
+        }
+        .flashcard-fun:hover {
+            transform: rotate(0deg) scale(1.02);
+        }
+        .word-big {
+            font-size: 2.5rem;
+            font-weight: 900;
+            color: #92400e;
+            margin-bottom: 0.5rem;
+            text-shadow: 2px 2px 0 #fef3c7;
+        }
+        .phonetic-fun {
+            font-size: 1rem;
+            color: #d97706;
+            margin-bottom: 2rem;
+        }
+        .definition-fun {
+            font-size: 1.125rem;
+            color: #78350f;
+            text-align: center;
+            line-height: 1.6;
+        }
+        .sticker {
+            position: absolute;
+            font-size: 2rem;
+        }
+        .sticker-1 { top: -15px; right: -15px; transform: rotate(15deg); }
+        .sticker-2 { bottom: -15px; left: -15px; transform: rotate(-15deg); }
+        .action-row {
+            display: flex;
+            gap: 1rem;
+            width: 100%;
+            max-width: 500px;
+        }
+        .btn-fun {
+            flex: 1;
+            padding: 1.25rem;
+            border-radius: 16px;
+            border: none;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 0 rgba(0,0,0,0.2);
+            transition: all 0.1s ease;
+        }
+        .btn-fun:active {
+            transform: translateY(4px);
+            box-shadow: 0 0 0 rgba(0,0,0,0.2);
+        }
+        .btn-skip {
+            background: #fca5a5;
+            color: #7f1d1d;
+        }
+        .btn-know {
+            background: #86efac;
+            color: #14532d;
+        }
+        .rewards {
+            display: flex;
+            gap: 1rem;
+            background: rgba(255,255,255,0.8);
+            padding: 1rem 1.5rem;
+            border-radius: 16px;
+        }
+        .reward-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 600;
+            color: #92400e;
+        }
+        .reward-icon {
+            font-size: 1.25rem;
+        }
+        .bottom-nav {
+            display: flex;
+            justify-content: space-around;
+            background: white;
+            padding: 1rem;
+            box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
+        }
+        .nav-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.25rem;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0.5rem 1rem;
+            border-radius: 12px;
+            transition: background 0.2s;
+        }
+        .nav-btn.active {
+            background: #fef3c7;
+        }
+        .nav-icon {
+            font-size: 1.5rem;
+        }
+        .nav-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #92400e;
+        }
+        @media (min-width: 768px) {
+            .word-big { font-size: 3rem; }
+            .flashcard-fun { min-height: 450px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">🎓 StudyBuddy</div>
+        <div class="streak-badge">
+            🔥 5 Day Streak
+        </div>
+    </div>
+    <div class="main">
+        <div class="level-bar">
+            <div class="level-info">
+                <span>Level 3 Scholar</span>
+                <span>650 / 1000 XP</span>
+            </div>
+            <div class="xp-bar">
+                <div class="xp-fill"></div>
+            </div>
+        </div>
+        <div class="card-area">
+            <div class="flashcard-fun">
+                <div class="sticker sticker-1">⭐</div>
+                <div class="sticker sticker-2">✨</div>
+                <div class="word-big">Tenacious</div>
+                <div class="phonetic-fun">/təˈneɪʃəs/</div>
+                <div class="definition-fun">
+                    Holding firmly to a purpose or opinion; persistent and determined
+                </div>
+            </div>
+        </div>
+        <div class="action-row">
+            <button class="btn-fun btn-skip">😕 Skip</button>
+            <button class="btn-fun btn-know">✓ I Know This!</button>
+        </div>
+        <div class="rewards">
+            <div class="reward-item">
+                <span class="reward-icon">🏆</span>
+                <span>12 Cards</span>
+            </div>
+            <div class="reward-item">
+                <span class="reward-icon">💎</span>
+                <span>450 XP</span>
+            </div>
+            <div class="reward-item">
+                <span class="reward-icon">🎯</span>
+                <span>85%</span>
+            </div>
+        </div>
+    </div>
+    <div class="bottom-nav">
+        <button class="nav-btn active">
+            <div class="nav-icon">📚</div>
+            <div class="nav-label">Study</div>
+        </button>
+        <button class="nav-btn">
+            <div class="nav-icon">🎤</div>
+            <div class="nav-label">Test</div>
+        </button>
+        <button class="nav-btn">
+            <div class="nav-icon">🏅</div>
+            <div class="nav-label">Progress</div>
+        </button>
+        <button class="nav-btn">
+            <div class="nav-icon">👤</div>
+            <div class="nav-label">Profile</div>
+        </button>
+    </div>
+</body>
+</html>
