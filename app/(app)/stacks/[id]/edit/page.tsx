@@ -311,10 +311,10 @@ export default function EditStackPage() {
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle>Cards</CardTitle>
+              <CardTitle>Flashcards</CardTitle>
               <Button type="button" variant="outline" size="sm" onClick={addCard}>
                 <Plus className="w-4 h-4 mr-2" />
-                Add Card
+                Add Flashcard
               </Button>
             </div>
           </CardHeader>
@@ -374,7 +374,7 @@ export default function EditStackPage() {
                   </p>
                   <Button type="button" variant="default" onClick={addCard}>
                     <Plus className="w-4 h-4 mr-2" />
-                    Add New Card
+                    Add New Flashcard
                   </Button>
                 </div>
               </div>

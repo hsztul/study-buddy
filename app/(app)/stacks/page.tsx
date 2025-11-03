@@ -104,9 +104,9 @@ export default function MyStacksPage() {
       {/* Header */}
       <div>
         <div>
-          <h1 className="text-3xl font-bold">My Card Stacks</h1>
+          <h1 className="text-3xl font-bold">My Flashcard Stacks</h1>
           <p className="text-muted-foreground mt-1">
-            Organize your study materials into custom card stacks
+            Organize your study materials into custom flashcard stacks
           </p>
         </div>
       </div>
@@ -139,7 +139,7 @@ export default function MyStacksPage() {
               </div>
               <h3 className="text-lg font-semibold mb-2">Create New Stack</h3>
               <p className="text-muted-foreground text-sm">
-                Start a new card stack to organize your study materials
+                Start a new flashcard stack to organize your study materials
               </p>
             </CardContent>
           </Card>

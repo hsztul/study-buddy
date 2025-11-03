@@ -164,10 +164,10 @@ export default function CreateStackPage() {
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle>Cards</CardTitle>
+              <CardTitle>Flashcards</CardTitle>
               <Button type="button" variant="outline" size="sm" onClick={addCard}>
                 <Plus className="w-4 h-4 mr-2" />
-                Add Card
+                Add Flashcard
               </Button>
             </div>
           </CardHeader>
@@ -175,7 +175,7 @@ export default function CreateStackPage() {
             {cards.map((card, index) => (
               <div key={card.id} className="border rounded-lg p-4 space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">Card {index + 1}</span>
+                  <span className="text-sm font-medium">Flashcard {index + 1}</span>
                   {cards.length > 1 && (
                     <Button
                       type="button"
