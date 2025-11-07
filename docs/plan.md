@@ -929,7 +929,35 @@ Start with section 0.1 (Project Setup & Dependencies) and work sequentially thro
 
 ---
 
-### 2.13 Testing & Cleanup
+### 2.13 Drag-and-Drop Card Reordering
+**Status:** In Progress
+
+**Tasks:**
+- [ ] Install @dnd-kit libraries (core, sortable, utilities)
+- [ ] Add position/order field to card schema
+- [ ] Update edit stack page with drag-and-drop functionality
+- [ ] Add visual drag handles (grip icon)
+- [ ] Implement reordering logic with @dnd-kit/sortable
+- [ ] Update API routes to persist card order
+- [ ] Ensure touch-friendly on mobile devices
+- [ ] Add smooth animations and visual feedback
+- [ ] Test on desktop (mouse drag) and mobile (touch drag)
+
+**Files to Update:**
+- `app/(app)/stacks/[id]/edit/page.tsx` - Add drag-and-drop
+- `lib/db/schema-v2.ts` - Add position field to card table
+- `app/api/stacks/[id]/cards/route.ts` - Update to handle ordering
+- `package.json` - Add @dnd-kit dependencies
+
+**Notes:**
+- Using @dnd-kit for React 19 compatibility and excellent mobile support
+- Cards maintain order both in UI state and database
+- Drag handles make it clear cards are reorderable
+- Position field allows flexible ordering
+
+---
+
+### 2.14 Testing & Cleanup
 **Status:** Pending
 
 **Tasks:**

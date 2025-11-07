@@ -29,11 +29,13 @@ export const card = pgTable("card", {
   definition: text("definition").notNull(), // user-provided or primary definition
   partOfSpeech: text("part_of_speech"), // only for SAT vocab
   source: text("source").default("user").notNull(), // 'user' | 'sat_base'
+  position: integer("position").notNull().default(0), // Card order within stack for drag-and-drop
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 }, (table) => ({
   stackIdIdx: index("card_stack_id_idx").on(table.stackId),
   termIdx: index("card_term_idx").on(table.term),
+  stackIdPositionIdx: index("card_stack_id_position_idx").on(table.stackId, table.position),
 }));
 
 // Cached definitions for SAT vocab cards (from dictionary API)

@@ -78,6 +78,7 @@
   * As a user, I can delete custom card stacks (but not the SAT Vocabulary stack).
   * As a user, I can create cards within my custom stacks by entering a term (front) and definition (back).
   * As a user, I can edit or delete individual cards within my custom stacks.
+  * As a user, I can reorder flashcards in my custom stacks using drag-and-drop (works on both desktop and mobile).
 
 * **Review Mode (Per Stack)**
 
@@ -189,6 +190,7 @@
 * Add multiple cards in one session.
 * Edit existing cards (custom stacks only).
 * Delete cards (custom stacks only).
+* Drag-and-drop reordering: Users can reorder flashcards by dragging them (desktop: mouse drag, mobile: touch drag with visual feedback).
 
 ### Profile
 

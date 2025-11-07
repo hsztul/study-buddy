@@ -2,13 +2,32 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { ArrowLeft, Save, Plus, X } from "lucide-react";
+import { ArrowLeft, Save, Plus, X, GripVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+  DragStartEvent,
+  DragOverlay,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 interface Stack {
   id: number;
@@ -22,6 +41,98 @@ interface CardInput {
   definition: string;
   isExisting?: boolean;
   existingId?: number;
+  position?: number;
+}
+
+interface SortableCardProps {
+  card: CardInput;
+  index: number;
+  isProtected: boolean;
+  onUpdate: (id: string, field: "term" | "definition", value: string) => void;
+  onRemove: (id: string) => void;
+  totalCards: number;
+}
+
+function SortableCard({ card, index, isProtected, onUpdate, onRemove, totalCards }: SortableCardProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ 
+    id: card.id,
+    disabled: isProtected,
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      id={`card-${card.id}`}
+      className={`border rounded-lg p-4 space-y-3 bg-background ${
+        isDragging ? "shadow-lg scale-105 z-50" : ""
+      }`}
+    >
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          {!isProtected && (
+            <button
+              type="button"
+              className="cursor-grab active:cursor-grabbing touch-none p-1 hover:bg-muted rounded"
+              {...attributes}
+              {...listeners}
+            >
+              <GripVertical className="w-5 h-5 text-muted-foreground" />
+            </button>
+          )}
+          <span className="text-sm font-medium">Card {index + 1}</span>
+        </div>
+        {totalCards > 1 && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => onRemove(card.id)}
+          >
+            <X className="w-4 h-4" />
+          </Button>
+        )}
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor={`term-${card.id}`}>Term (Front) *</Label>
+        <Input
+          id={`term-${card.id}`}
+          placeholder="e.g., Photosynthesis"
+          value={card.term}
+          onChange={(e) => onUpdate(card.id, "term", e.target.value)}
+          maxLength={200}
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor={`definition-${card.id}`}>
+          Definition (Back) *
+        </Label>
+        <Textarea
+          id={`definition-${card.id}`}
+          placeholder="e.g., The process by which plants convert light energy into chemical energy"
+          value={card.definition}
+          onChange={(e) => onUpdate(card.id, "definition", e.target.value)}
+          maxLength={1000}
+          rows={3}
+        />
+      </div>
+    </div>
+  );
 }
 
 export default function EditStackPage() {
@@ -34,6 +145,19 @@ export default function EditStackPage() {
   const [cards, setCards] = useState<CardInput[]>([]);
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
+  const [activeId, setActiveId] = useState<string | null>(null);
+
+  // Sensors for drag-and-drop (touch and mouse)
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8, // 8px movement required before drag starts (prevents accidental drags)
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   useEffect(() => {
     fetchStackAndCards();
@@ -68,12 +192,13 @@ export default function EditStackPage() {
       }
       const cardsData = await cardsResponse.json();
       
-      const cardInputs: CardInput[] = cardsData.cards.map((card: any) => ({
+      const cardInputs: CardInput[] = cardsData.cards.map((card: any, index: number) => ({
         id: `existing-${card.id}`,
         term: card.term,
         definition: card.definition,
         isExisting: true,
         existingId: card.id,
+        position: card.position ?? index,
       }));
       
       setCards(cardInputs.length > 0 ? cardInputs : [{ id: "1", term: "", definition: "" }]);
@@ -92,7 +217,8 @@ export default function EditStackPage() {
 
   const addCard = () => {
     const newId = (Math.max(...cards.map((c) => parseInt(c.id.replace('existing-', '')))) + 1).toString();
-    setCards([...cards, { id: newId, term: "", definition: "" }]);
+    const newPosition = cards.length > 0 ? Math.max(...cards.map(c => c.position ?? 0)) + 1 : 0;
+    setCards([...cards, { id: newId, term: "", definition: "", position: newPosition }]);
     
     // Scroll to the bottom after adding a new card
     setTimeout(() => {
@@ -119,6 +245,64 @@ export default function EditStackPage() {
     setCards(
       cards.map((c) => (c.id === id ? { ...c, [field]: value } : c))
     );
+  };
+
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveId(event.active.id as string);
+  };
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    setActiveId(null);
+
+    if (!over || active.id === over.id) {
+      return;
+    }
+
+    setCards((items) => {
+      const oldIndex = items.findIndex((item) => item.id === active.id);
+      const newIndex = items.findIndex((item) => item.id === over.id);
+
+      const reorderedCards = arrayMove(items, oldIndex, newIndex);
+      
+      // Update positions after reordering
+      const updatedCards = reorderedCards.map((card, index) => ({
+        ...card,
+        position: index,
+      }));
+
+      // Save order immediately if there are existing cards
+      const existingCards = updatedCards.filter(c => c.isExisting && c.existingId);
+      if (existingCards.length > 0 && stack) {
+        saveCardOrder(existingCards.map(c => ({
+          id: c.existingId!,
+          position: c.position!,
+        })));
+      }
+
+      return updatedCards;
+    });
+  };
+
+  const saveCardOrder = async (cardOrders: { id: number; position: number }[]) => {
+    try {
+      const response = await fetch(`/api/stacks/${stackId}/cards/reorder`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ cardOrders }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to save card order");
+      }
+    } catch (error) {
+      console.error("Error saving card order:", error);
+      toast({
+        title: "Warning",
+        description: "Card order may not be saved. Please try saving the stack again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -319,50 +503,44 @@ export default function EditStackPage() {
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            {cards.map((card, index) => (
-              <div key={card.id} id={`card-${card.id}`} className="border rounded-lg p-4 space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">Card {index + 1}</span>
-                  {cards.length > 1 && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeCard(card.id)}
-                    >
-                      <X className="w-4 h-4" />
-                    </Button>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor={`term-${card.id}`}>Term (Front) *</Label>
-                  <Input
-                    id={`term-${card.id}`}
-                    placeholder="e.g., Photosynthesis"
-                    value={card.term}
-                    onChange={(e) => updateCard(card.id, "term", e.target.value)}
-                    maxLength={200}
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragStart={handleDragStart}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext
+                items={cards.map((c) => c.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                {cards.map((card, index) => (
+                  <SortableCard
+                    key={card.id}
+                    card={card}
+                    index={index}
+                    isProtected={stack?.isProtected || false}
+                    onUpdate={updateCard}
+                    onRemove={removeCard}
+                    totalCards={cards.length}
                   />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor={`definition-${card.id}`}>
-                    Definition (Back) *
-                  </Label>
-                  <Textarea
-                    id={`definition-${card.id}`}
-                    placeholder="e.g., The process by which plants convert light energy into chemical energy"
-                    value={card.definition}
-                    onChange={(e) =>
-                      updateCard(card.id, "definition", e.target.value)
-                    }
-                    maxLength={1000}
-                    rows={3}
-                  />
-                </div>
-              </div>
-            ))}
+                ))}
+              </SortableContext>
+              <DragOverlay>
+                {activeId ? (
+                  <div className="border rounded-lg p-4 bg-background shadow-2xl opacity-90">
+                    <div className="flex items-center gap-2 mb-2">
+                      <GripVertical className="w-5 h-5 text-muted-foreground" />
+                      <span className="text-sm font-medium">
+                        Card {cards.findIndex((c) => c.id === activeId) + 1}
+                      </span>
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      {cards.find((c) => c.id === activeId)?.term || "..."}
+                    </div>
+                  </div>
+                ) : null}
+              </DragOverlay>
+            </DndContext>
             
             {/* Add New Card Area */}
             <div className="border-2 border-dashed border-muted-foreground/20 rounded-lg p-6 text-center">

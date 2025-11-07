@@ -67,7 +67,7 @@ export async function GET(
           and(eq(userCard.cardId, card.id), eq(userCard.userId, userId))
         )
         .where(and(...conditions))
-        .orderBy(card.createdAt)
+        .orderBy(card.position, card.createdAt)
         .limit(limit)
         .offset(offset);
     } else {
@@ -84,7 +84,7 @@ export async function GET(
         })
         .from(card)
         .where(and(...conditions))
-        .orderBy(card.createdAt)
+        .orderBy(card.position, card.createdAt)
         .limit(limit)
         .offset(offset);
     }
@@ -181,7 +181,13 @@ export async function POST(
       );
     }
 
-    // Create card
+    // Get the highest position in the stack
+    const [maxPosition] = await db
+      .select({ max: sql<number>`COALESCE(MAX(${card.position}), -1)` })
+      .from(card)
+      .where(eq(card.stackId, stackId));
+
+    // Create card with next position
     const [newCard] = await db
       .insert(card)
       .values({
@@ -189,6 +195,7 @@ export async function POST(
         term: term.trim(),
         definition: definition.trim(),
         source: "user",
+        position: (maxPosition?.max ?? -1) + 1,
       })
       .returning();
 
