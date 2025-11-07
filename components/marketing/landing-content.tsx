@@ -18,15 +18,15 @@ export function LandingContent() {
           </Badge>
           
           <h1 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl lg:text-7xl">
-            Talk your way to{" "}
+            Master any subject with{" "}
             <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              SAT vocab mastery
+              voice-powered flashcards
             </span>
           </h1>
           
           <p className="mt-6 text-lg text-muted-foreground sm:text-xl md:text-2xl max-w-3xl mx-auto">
-            Review with flashcards, then <strong>speak</strong> definitions to your StudyBuddy—and get instant, 
-            friendly feedback powered by AI. Master 384 SAT words the fun way.
+            Create custom flashcard stacks for any subject, then <strong>speak</strong> answers to your StudyBuddy—and get instant, 
+            friendly feedback powered by AI. Study smarter, not harder.
           </p>
           
           <div className="mt-10 flex flex-col gap-4 sm:flex-row sm:justify-center">
@@ -54,7 +54,7 @@ export function LandingContent() {
             </div>
             <div className="flex items-center gap-2">
               <CheckCircle2 className="h-4 w-4 text-green-600" />
-              <span>384 SAT words included</span>
+              <span>Unlimited custom stacks</span>
             </div>
           </div>
         </div>
@@ -65,10 +65,10 @@ export function LandingContent() {
         <div className="container px-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-2xl text-center">
             <h2 className="text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl">
-              Everything you need to ace SAT vocab
+              Everything you need to study smarter
             </h2>
             <p className="mt-4 text-lg text-muted-foreground sm:text-xl">
-              A smarter, more engaging way to learn vocabulary—designed for mobile-first studying.
+              A smarter, more engaging way to learn anything—designed for mobile-first studying.
             </p>
           </div>
 
@@ -140,9 +140,9 @@ export function LandingContent() {
                   <Target className="h-7 w-7 text-white" />
                 </div>
                 <div>
-                  <CardTitle className="text-xl">Flashcard Review</CardTitle>
+                  <CardTitle className="text-xl">Custom Card Stacks</CardTitle>
                   <CardDescription className="mt-2 text-base">
-                    Browse, flip, and swipe through 384 SAT words. Mark the ones you want to test yourself on and build your custom queue.
+                    Create unlimited flashcard stacks for any subject. Browse, flip, and swipe through your cards. Mark the ones you want to test yourself on and build your custom queue.
                   </CardDescription>
                 </div>
               </CardHeader>
@@ -177,7 +177,7 @@ export function LandingContent() {
               How it works
             </h2>
             <p className="mt-4 text-lg text-muted-foreground sm:text-xl">
-              Three simple steps to vocabulary mastery
+              Three simple steps to mastering any subject
             </p>
           </div>
 
@@ -187,9 +187,9 @@ export function LandingContent() {
                 1
               </div>
               <div className="flex-1 pt-2">
-                <h3 className="text-2xl font-bold">Review with flashcards</h3>
+                <h3 className="text-2xl font-bold">Create & review flashcards</h3>
                 <p className="mt-3 text-lg text-muted-foreground leading-relaxed">
-                  Browse 384 SAT words with beautiful flashcards. Flip to see definitions, examples, and synonyms. 
+                  Create custom flashcard stacks for any subject you're studying. Flip through beautiful flashcards to see definitions and examples. 
                   Mark the ones you want to test yourself on with a simple checkbox—build your personalized test queue.
                 </p>
               </div>
@@ -200,9 +200,9 @@ export function LandingContent() {
                 2
               </div>
               <div className="flex-1 pt-2">
-                <h3 className="text-2xl font-bold">Speak the definition</h3>
+                <h3 className="text-2xl font-bold">Speak the answer</h3>
                 <p className="mt-3 text-lg text-muted-foreground leading-relaxed">
-                  Enter Test Mode and see a word. Tap the mic button and speak the definition in your own words. 
+                  Enter Test Mode and see a card. Tap the mic button and speak the answer in your own words. 
                   Our AI transcribes your voice using OpenAI's Whisper—the most accurate speech recognition available.
                 </p>
               </div>
@@ -243,15 +243,15 @@ export function LandingContent() {
             </Badge>
             
             <h2 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
-              Ready to master{" "}
+              Ready to study{" "}
               <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                SAT vocabulary?
+                like never before?
               </span>
             </h2>
             
             <p className="mt-6 text-xl text-muted-foreground sm:text-2xl">
-              Join students who are learning smarter with voice-powered practice. 
-              No downloads, no setup—just sign in and start talking.
+              Join students who are learning smarter with voice-powered flashcards. 
+              No downloads, no setup—create your first stack and start talking.
             </p>
             
             <div className="mt-10 flex flex-col gap-4 sm:flex-row sm:justify-center">
@@ -274,7 +274,7 @@ export function LandingContent() {
               </div>
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="h-4 w-4 text-green-600" />
-                <span>384 SAT words</span>
+                <span>Unlimited stacks & cards</span>
               </div>
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="h-4 w-4 text-green-600" />

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
-import { Plus, BookOpen, Clock, TrendingUp, Shield, Trash2, Lock, Edit, MoreVertical } from "lucide-react";
+import { Plus, BookOpen, CheckCircle, TrendingUp, Shield, Trash2, Lock, Edit, MoreVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -18,7 +18,7 @@ interface Stack {
   updatedAt: string;
   cardCount: number;
   reviewedCount: number;
-  dueCount: number;
+  masteredCount: number;
   lastStudied: string | null;
 }
 
@@ -223,9 +223,9 @@ export default function MyStacksPage() {
                     <span className="text-xs text-muted-foreground">Reviewed</span>
                   </div>
                   <div className="flex flex-col items-center p-2 bg-muted rounded-md">
-                    <Clock className="w-4 h-4 text-muted-foreground mb-1" />
-                    <span className="font-semibold">{stack.dueCount}</span>
-                    <span className="text-xs text-muted-foreground">Due</span>
+                    <CheckCircle className="w-4 h-4 text-muted-foreground mb-1" />
+                    <span className="font-semibold">{stack.masteredCount}</span>
+                    <span className="text-xs text-muted-foreground">Mastered</span>
                   </div>
                 </div>
 

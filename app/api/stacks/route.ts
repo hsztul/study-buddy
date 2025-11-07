@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
         updatedAt: cardStack.updatedAt,
         cardCount: sql<number>`COUNT(DISTINCT ${card.id})`.as("card_count"),
         reviewedCount: sql<number>`COUNT(DISTINCT CASE WHEN ${userCard.hasReviewed} = true THEN ${userCard.cardId} END)`.as("reviewed_count"),
-        dueCount: sql<number>`COUNT(DISTINCT CASE WHEN ${userCard.dueOn} <= CURRENT_DATE THEN ${userCard.cardId} END)`.as("due_count"),
+        masteredCount: sql<number>`COUNT(DISTINCT CASE WHEN ${userCard.lastResult} = 'pass' THEN ${userCard.cardId} END)`.as("mastered_count"),
         lastStudied: sql<Date>`MAX(${userCard.lastReviewedAt})`.as("last_studied"),
       })
       .from(cardStack)

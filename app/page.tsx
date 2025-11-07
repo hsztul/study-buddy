@@ -38,13 +38,13 @@ export default async function HomePage() {
       {/* Hero Section */}
       <section className="container mx-auto px-4 py-20 text-center">
         <h1 className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-          Master Vocabulary with
+          Master Any Subject with
           <br />
-          Custom Card Stacks
+          Voice-Powered Flashcards
         </h1>
         <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-          Create unlimited flashcard stacks, review with intuitive gestures, and track your progress. 
-          Start with 384 SAT words or build your own collections.
+          Create unlimited flashcard stacks for any subject, review with intuitive gestures, and track your progress. 
+          <br/>Includes 300+ SAT words to get you started.
         </p>
         <div className="flex gap-4 justify-center">
           <Link href="/sign-up">
@@ -70,7 +70,7 @@ export default async function HomePage() {
             </div>
             <h3 className="text-xl font-semibold mb-2">Custom Card Stacks</h3>
             <p className="text-muted-foreground">
-              Create unlimited stacks to organize your study materials. Start with SAT vocab or build your own.
+              Create unlimited stacks to organize your study materials for any subject. Biology, history, languages—you name it.
             </p>
           </div>
 
@@ -80,7 +80,7 @@ export default async function HomePage() {
             </div>
             <h3 className="text-xl font-semibold mb-2">Voice Testing</h3>
             <p className="text-muted-foreground">
-              Speak definitions and get AI-powered feedback. Practice like you're talking to a tutor.
+              Speak answers and get AI-powered feedback. Practice like you're talking to a tutor.
             </p>
           </div>
 
@@ -101,7 +101,7 @@ export default async function HomePage() {
         <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-12 text-white">
           <h2 className="text-3xl font-bold mb-4">Ready to start learning?</h2>
           <p className="text-lg mb-8 opacity-90">
-            Join StudyBuddy today and master vocabulary your way.
+            Join StudyBuddy today and master any subject your way.
           </p>
           <Link href="/sign-up">
             <Button size="lg" variant="secondary" className="gap-2">
