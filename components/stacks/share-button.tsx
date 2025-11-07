@@ -23,7 +23,7 @@ export default function ShareButton({ stackTitle, stackUrl }: ShareButtonProps) 
   const shareText = `Here's a flashcard stack I wanted to share on ${stackTitle}. Check it out on the Study Buddy app! ${stackUrl}`;
 
   const handleNativeShare = async () => {
-    if (navigator.share) {
+    if (typeof navigator.share === 'function') {
       try {
         await navigator.share({
           title: `${stackTitle} - Study Buddy`,
@@ -75,6 +75,7 @@ export default function ShareButton({ stackTitle, stackUrl }: ShareButtonProps) 
   };
 
   const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  const canShare = typeof navigator.share === 'function';
 
   return (
     <DropdownMenu>
@@ -89,7 +90,7 @@ export default function ShareButton({ stackTitle, stackUrl }: ShareButtonProps) 
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-48">
-        {isMobile && navigator.share && (
+        {isMobile && canShare && (
           <DropdownMenuItem onClick={handleNativeShare} className="cursor-pointer">
             <Share2 className="w-4 h-4 mr-2" />
             Share...

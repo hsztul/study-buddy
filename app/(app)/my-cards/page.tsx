@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Search, Filter, ArrowUpDown, Trash2, CheckCircle, XCircle, Clock, BookOpen, List, Grid3X3, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -157,7 +157,7 @@ function MyFlashcard({ card, onRemove }: { card: MyCard; onRemove: (wordId: numb
   );
 }
 
-export default function MyCardsPage() {
+function MyCardsPageContent() {
   const searchParams = useSearchParams();
   const { toast } = useToast();
   const [cards, setCards] = useState<MyCard[]>([]);
@@ -571,5 +571,17 @@ export default function MyCardsPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function MyCardsPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    }>
+      <MyCardsPageContent />
+    </Suspense>
   );
 }
