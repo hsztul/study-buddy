@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useImperativeHandle, forwardRef } from "react";
+import { useAuth } from "@clerk/nextjs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -30,6 +31,7 @@ export interface FlashcardRef {
 }
 
 export const Flashcard = forwardRef<FlashcardRef, FlashcardProps>(({ word, wordId, partOfSpeech, inTestQueue = false, stackId, definition: propDefinition, onQueueUpdate, onFlip, onReviewUpdate }, ref) => {
+  const { isSignedIn } = useAuth();
   const [isFlipped, setIsFlipped] = useState(false);
   const [definition, setDefinition] = useState<Definition | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -60,8 +62,8 @@ export const Flashcard = forwardRef<FlashcardRef, FlashcardProps>(({ word, wordI
     setIsFlipped(newFlipState);
     onFlip?.();
 
-    // Mark as reviewed when flipping to back for the first time
-    if (newFlipState && !isFlipped) {
+    // Mark as reviewed when flipping to back for the first time (only for authenticated users)
+    if (newFlipState && !isFlipped && isSignedIn) {
       try {
         await fetch("/api/review/mark", {
           method: "POST",

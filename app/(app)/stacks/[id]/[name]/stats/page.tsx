@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
+import { useAuth } from "@clerk/nextjs";
 import { BarChart3, BookOpen, TrendingUp, Clock, Target } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import SignUpCTA from "@/components/auth/sign-up-cta";
 
 interface Card {
   id: number;
@@ -17,7 +19,20 @@ interface Card {
 
 export default function StackStatsPage() {
   const params = useParams();
+  const router = useRouter();
+  const { isSignedIn } = useAuth();
   const stackId = params.id as string;
+  
+  // Show sign-up CTA for non-authenticated users
+  if (!isSignedIn) {
+    return (
+      <SignUpCTA 
+        mode="stats" 
+        onBack={() => router.push(`/stacks/${stackId}/${params.name}/review`)}
+      />
+    );
+  }
+  
   const [cards, setCards] = useState<Card[]>([]);
   const [loading, setLoading] = useState(true);
 

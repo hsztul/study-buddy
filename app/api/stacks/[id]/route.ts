@@ -4,35 +4,38 @@ import { db } from "@/lib/db";
 import { cardStack, card, userCard } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 
-// GET /api/stacks/[id] - Get stack details
+// GET /api/stacks/[id] - Get stack details (public read access)
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { userId } = await auth();
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
     const { id } = await params;
     const stackId = parseInt(id);
     if (isNaN(stackId)) {
       return NextResponse.json({ error: "Invalid stack ID" }, { status: 400 });
     }
 
-    // Fetch stack
+    // Fetch stack - allow public access to any stack
     const [stack] = await db
       .select()
       .from(cardStack)
-      .where(and(eq(cardStack.id, stackId), eq(cardStack.userId, userId)))
+      .where(eq(cardStack.id, stackId))
       .limit(1);
 
     if (!stack) {
       return NextResponse.json({ error: "Stack not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ stack });
+    // Add ownership info for client-side logic
+    const responseStack = {
+      ...stack,
+      isOwner: userId === stack.userId,
+      isPublicView: !userId || userId !== stack.userId,
+    };
+
+    return NextResponse.json({ stack: responseStack });
   } catch (error) {
     console.error("Error fetching stack:", error);
     return NextResponse.json(

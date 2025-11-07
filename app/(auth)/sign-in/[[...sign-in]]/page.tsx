@@ -17,6 +17,7 @@ export default function SignInPage() {
               card: "shadow-xl",
             },
           }}
+          redirectUrl="/stacks"
         />
       </div>
     </div>

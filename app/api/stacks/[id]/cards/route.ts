@@ -4,28 +4,24 @@ import { db } from "@/lib/db";
 import { cardStack, card, userCard } from "@/lib/db/schema";
 import { eq, and, desc, asc, ilike, sql } from "drizzle-orm";
 
-// GET /api/stacks/[id]/cards - Get cards in stack
+// GET /api/stacks/[id]/cards - Get cards in stack (public read access)
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { userId } = await auth();
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
     const { id } = await params;
     const stackId = parseInt(id);
     if (isNaN(stackId)) {
       return NextResponse.json({ error: "Invalid stack ID" }, { status: 400 });
     }
 
-    // Verify stack belongs to user
+    // Verify stack exists - allow public access to any stack
     const [stack] = await db
       .select()
       .from(cardStack)
-      .where(and(eq(cardStack.id, stackId), eq(cardStack.userId, userId)))
+      .where(eq(cardStack.id, stackId))
       .limit(1);
 
     if (!stack) {
@@ -44,32 +40,54 @@ export async function GET(
       conditions.push(ilike(card.term, `%${search}%`));
     }
 
-    // Fetch cards with user progress
-    const cards = await db
-      .select({
-        id: card.id,
-        term: card.term,
-        definition: card.definition,
-        partOfSpeech: card.partOfSpeech,
-        source: card.source,
-        createdAt: card.createdAt,
-        updatedAt: card.updatedAt,
-        hasReviewed: userCard.hasReviewed,
-        inTestQueue: userCard.inTestQueue,
-        streak: userCard.streak,
-        lastResult: userCard.lastResult,
-        dueOn: userCard.dueOn,
-        lastReviewedAt: userCard.lastReviewedAt,
-      })
-      .from(card)
-      .leftJoin(
-        userCard,
-        and(eq(userCard.cardId, card.id), eq(userCard.userId, userId))
-      )
-      .where(and(...conditions))
-      .orderBy(card.createdAt)
-      .limit(limit)
-      .offset(offset);
+    // Fetch cards - only include user progress if authenticated
+    let cards;
+    
+    if (userId) {
+      // Authenticated user - include their progress
+      cards = await db
+        .select({
+          id: card.id,
+          term: card.term,
+          definition: card.definition,
+          partOfSpeech: card.partOfSpeech,
+          source: card.source,
+          createdAt: card.createdAt,
+          updatedAt: card.updatedAt,
+          hasReviewed: userCard.hasReviewed,
+          inTestQueue: userCard.inTestQueue,
+          streak: userCard.streak,
+          lastResult: userCard.lastResult,
+          dueOn: userCard.dueOn,
+          lastReviewedAt: userCard.lastReviewedAt,
+        })
+        .from(card)
+        .leftJoin(
+          userCard,
+          and(eq(userCard.cardId, card.id), eq(userCard.userId, userId))
+        )
+        .where(and(...conditions))
+        .orderBy(card.createdAt)
+        .limit(limit)
+        .offset(offset);
+    } else {
+      // Public user - only basic card info
+      cards = await db
+        .select({
+          id: card.id,
+          term: card.term,
+          definition: card.definition,
+          partOfSpeech: card.partOfSpeech,
+          source: card.source,
+          createdAt: card.createdAt,
+          updatedAt: card.updatedAt,
+        })
+        .from(card)
+        .where(and(...conditions))
+        .orderBy(card.createdAt)
+        .limit(limit)
+        .offset(offset);
+    }
 
     // Get total count
     const [{ count: totalCount }] = await db
@@ -85,6 +103,7 @@ export async function GET(
         total: Number(totalCount),
         totalPages: Math.ceil(Number(totalCount) / limit),
       },
+      isPublicView: !userId || userId !== stack.userId,
     });
   } catch (error) {
     console.error("Error fetching cards:", error);

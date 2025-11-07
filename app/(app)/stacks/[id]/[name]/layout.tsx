@@ -2,27 +2,45 @@
 
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, usePathname, useRouter } from "next/navigation";
+import { useAuth } from "@clerk/nextjs";
 import { ArrowLeft, BookOpen, Mic, MessageSquare, BarChart3, Shield, Edit } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
+import ShareButton from "@/components/stacks/share-button";
 
 interface Stack {
   id: number;
   name: string;
   isProtected: boolean;
+  isOwner?: boolean;
+  isPublicView?: boolean;
 }
 
 export default function StackLayout({ children }: { children: React.ReactNode }) {
   const params = useParams();
   const pathname = usePathname();
   const router = useRouter();
+  const { isSignedIn, userId } = useAuth();
   const stackId = params.id as string;
   const stackName = params.name as string;
   const [stack, setStack] = useState<Stack | null>(null);
   const [loading, setLoading] = useState(true);
   const [isValidName, setIsValidName] = useState(false);
+  const [isClient, setIsClient] = useState(false);
   const isLoadingRef = useRef(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  const handleBackNavigation = () => {
+    if (isSignedIn) {
+      router.push("/stacks");
+    } else {
+      router.push("/");
+    }
+  };
 
   const fetchStack = useCallback(async () => {
     if (isLoadingRef.current) return; // Prevent multiple fetches
@@ -91,7 +109,7 @@ export default function StackLayout({ children }: { children: React.ReactNode })
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => router.push("/stacks")}
+                onClick={handleBackNavigation}
                 className="gap-2"
               >
                 <ArrowLeft className="w-4 h-4" />
@@ -109,18 +127,29 @@ export default function StackLayout({ children }: { children: React.ReactNode })
                 )}
               </h1>
               
-              {/* Edit Button */}
-              {!stack.isProtected && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => router.push(`/stacks/${stackId}/edit`)}
-                  className="gap-2"
-                >
-                  <Edit className="w-4 h-4" />
-                  Edit
-                </Button>
-              )}
+              {/* Action Buttons */}
+              <div className="flex items-center gap-2">
+                {/* Share Button */}
+                {isClient && (
+                  <ShareButton 
+                    stackTitle={stack.name}
+                    stackUrl={`${window.location.origin}/stacks/${stackId}/${stack.name.toLowerCase().replace(/\s+/g, '-')}/review`}
+                  />
+                )}
+                
+                {/* Edit Button - Only show for owners and non-protected stacks */}
+                {stack.isOwner && !stack.isProtected && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => router.push(`/stacks/${stackId}/edit`)}
+                    className="gap-2"
+                  >
+                    <Edit className="w-4 h-4" />
+                    Edit
+                  </Button>
+                )}
+              </div>
             </div>
 
             {/* Tabs */}
@@ -152,7 +181,7 @@ export default function StackLayout({ children }: { children: React.ReactNode })
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => router.push("/stacks")}
+                  onClick={handleBackNavigation}
                   className="gap-2 p-2"
                 >
                   <ArrowLeft className="w-4 h-4" />
@@ -168,17 +197,28 @@ export default function StackLayout({ children }: { children: React.ReactNode })
                 </h1>
               </div>
               
-              {/* Edit Button */}
-              {!stack.isProtected && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => router.push(`/stacks/${stackId}/edit`)}
-                  className="gap-2 p-2"
-                >
-                  <Edit className="w-4 h-4" />
-                </Button>
-              )}
+              {/* Action Buttons */}
+              <div className="flex items-center gap-1">
+                {/* Share Button */}
+                {isClient && (
+                  <ShareButton 
+                    stackTitle={stack.name}
+                    stackUrl={`${window.location.origin}/stacks/${stackId}/${stack.name.toLowerCase().replace(/\s+/g, '-')}`}
+                  />
+                )}
+                
+                {/* Edit Button - Only show for owners and non-protected stacks */}
+                {stack.isOwner && !stack.isProtected && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => router.push(`/stacks/${stackId}/edit`)}
+                    className="gap-2 p-2"
+                  >
+                    <Edit className="w-4 h-4" />
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
         </div>

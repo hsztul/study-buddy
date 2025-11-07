@@ -1,5 +1,3 @@
-import { auth } from "@clerk/nextjs/server";
-import { redirect } from "next/navigation";
 import { Header } from "@/components/layout/header";
 
 export default async function AppLayout({
@@ -7,13 +5,6 @@ export default async function AppLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // Protect all app routes - require authentication
-  const { userId } = await auth();
-  
-  if (!userId) {
-    redirect("/sign-in");
-  }
-
   return (
     <>
       {/* Desktop and Portrait Mobile Layout */}

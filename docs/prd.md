@@ -10,13 +10,13 @@
 
 **Primary goal (Phase 1):** Deliver a delightful, fast, voice-first study flow with custom card stacks, clear progress tracking per stack, and personalized feedback.
 
-**Key Feature:** Users can create unlimited custom card stacks. Every user starts with a protected "SAT Vocabulary" stack (384 words) that cannot be edited or deleted.
+**Key Feature:** Users can create unlimited custom card stacks. Every user starts with a protected "SAT Vocabulary" stack that cannot be edited or deleted.
 
 ---
 
 ## 2) Target Users & JTBD
 
-* **HS Students prepping for SAT** (primary)
+* **HS Students prepping for SAT and other tests** (primary)
 
   * *JTBD:* “When I’m studying vocab on my phone, help me practice and be told quickly whether I’m right, with tips to remember what I miss.”
 * **Parents/Tutors** (secondary)
@@ -51,6 +51,16 @@
 * iOS/Android native shells.
 * Gamification (streaks, XP) beyond very light badges.
 * Stack archiving (only deletion supported).
+
+### In-Scope (Phase 2) - Sharing Stacks Feature
+
+* **Share Button**: Cool looking share button on stack pages
+* **Mobile Sharing**: Native iOS share sheet with custom text: "Here's a flashcard stack I wanted to share on {stack title}. Check it out on the Study Buddy app! {url}"
+* **Desktop Sharing**: Email link sharing with same custom text
+* **Public Stack Viewing**: Stack pages viewable without login
+* **Limited Access for Non-Users**: Only Review mode accessible, other modes show sign-up CTAs
+* **Updated Navigation**: Non-logged in users see sign-up button instead of "My Stacks" and avatar
+* **Hidden Edit Controls**: Edit button not visible for non-logged in users
 
 ---
 
@@ -92,6 +102,16 @@
   * As a user, I can view individual card progress within a stack.
   * As a user, I can access my Profile by clicking my avatar to see global stats and account settings.
   * As a user, I can see aggregated stats across all my stacks on my profile.
+
+* **Sharing Stacks**
+
+  * As a user, I can share a stack via a cool looking share button on the stack page.
+  * As a mobile user, I can share using the native iOS share sheet with custom text.
+  * As a desktop user, I can share via email with a pre-filled message.
+  * As a non-logged in user, I can view shared stack pages and access Review mode.
+  * As a non-logged in user, I see sign-up CTAs when trying to access Test, Tutor, or Stats modes.
+  * As a non-logged in user, I see a sign-up button in the header instead of "My Stacks" and avatar.
+  * As a non-logged in user, I don't see edit buttons on stack pages.
 
 ---
 
@@ -177,6 +197,16 @@
 
   * Total stacks, Total cards studied, Overall accuracy last 7 days, Total cards due today.
 * List of all stacks with quick stats per stack.
+
+### Sharing & Public Access
+
+* **Share Button**: Prominent, cool-looking share button on stack pages (near stack title).
+* **Mobile Share**: Native iOS share sheet with custom message and URL.
+* **Desktop Share**: Email link with pre-filled subject and body.
+* **Public Stack View**: Clean, read-only view for non-logged in users.
+* **Sign-up CTAs**: Descriptive overlays for Test/Tutor/Stats modes explaining benefits and sign-up prompt.
+* **Non-logged in Header**: Simple header with app logo and "Sign Up" button (no "My Stacks" or avatar).
+* **Hidden Edit Controls**: Edit buttons and controls hidden for non-logged in users.
 
 ---
 

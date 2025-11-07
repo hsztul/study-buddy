@@ -592,6 +592,122 @@ Start with section 0.1 (Project Setup & Dependencies) and work sequentially thro
 
 ---
 
+## Phase 2.5: Sharing Stacks Feature
+
+### 2.5.1 Share Button Component
+**Status:** Pending
+
+**Tasks:**
+- [ ] Create share button component: `components/stacks/share-button.tsx`
+- [ ] Add cool looking design with Lucide Share icon
+- [ ] Position in stack header near stack title
+- [ ] Add hover and click animations
+- [ ] Detect mobile vs desktop for different share behaviors
+
+**Files to Create:**
+- `components/stacks/share-button.tsx` - Share button with platform detection
+
+---
+
+### 2.5.2 Mobile Native Share Sheet
+**Status:** Pending
+
+**Tasks:**
+- [ ] Implement Web Share API for mobile devices
+- [ ] Create share text: "Here's a flashcard stack I wanted to share on {stack title}. Check it out on the Study Buddy app! {url}"
+- [ ] Add fallback for browsers that don't support Web Share API
+- [ ] Test on iOS Safari and Android Chrome
+
+**Files to Update:**
+- `components/stacks/share-button.tsx` - Add mobile share functionality
+
+---
+
+### 2.5.3 Desktop Email Share
+**Status:** Pending
+
+**Tasks:**
+- [ ] Implement email share for desktop
+- [ ] Create mailto link with subject and body
+- [ ] Use same share text as mobile
+- [ ] Add click-to-copy URL fallback
+
+**Files to Update:**
+- `components/stacks/share-button.tsx` - Add desktop email share
+
+---
+
+### 2.5.4 Public Stack Access
+**Status:** Pending
+
+**Tasks:**
+- [ ] Update middleware to allow public access to stack pages
+- [ ] Update stack layout to work without authentication
+- [ ] Create public stack API endpoints (read-only)
+- [ ] Add public/protected state handling to components
+
+**Files to Update:**
+- `middleware.ts` - Allow public stack access
+- `app/(app)/stacks/[id]/layout.tsx` - Handle public access
+- API routes for stacks - Add public read access
+
+---
+
+### 2.5.5 Sign-up CTAs for Protected Features
+**Status:** Pending
+
+**Tasks:**
+- [ ] Create sign-up CTA component: `components/auth/sign-up-cta.tsx`
+- [ ] Add descriptive overlays for Test, Tutor, Stats modes
+- [ ] Explain benefits of each mode
+- [ ] Add Clerk sign-up buttons
+
+**Files to Create:**
+- `components/auth/sign-up-cta.tsx` - Reusable sign-up prompt
+- Update stack tab pages to show CTAs for non-auth users
+
+---
+
+### 2.5.6 Header Updates for Non-Logged In Users
+**Status:** Pending
+
+**Tasks:**
+- [ ] Update header component to detect auth state
+- [ ] Show "Sign Up" button instead of "My Stacks" and avatar for non-logged users
+- [ ] Maintain navigation back to landing page
+- [ ] Keep clean, minimal design
+
+**Files to Update:**
+- `components/layout/header.tsx` - Add auth-aware header state
+
+---
+
+### 2.5.7 Hide Edit Controls for Non-Logged In Users
+**Status:** Pending
+
+**Tasks:**
+- [ ] Update stack pages to hide edit buttons for non-auth users
+- [ ] Hide stack creation/editing features
+- [ ] Maintain clean read-only appearance
+
+**Files to Update:**
+- Stack-related components and pages
+
+---
+
+### 2.5.8 Navigation Updates
+**Status:** Pending
+
+**Tasks:**
+- [ ] Update back navigation to return to landing page for non-logged users
+- [ ] Update breadcrumb navigation
+- [ ] Ensure proper flow for shared stack links
+
+**Files to Update:**
+- Navigation components and stack layouts
+
+---
+
 ## Phase 2: Multi-Stack Architecture
 
 ### 2.1 Database Schema Re-architecture

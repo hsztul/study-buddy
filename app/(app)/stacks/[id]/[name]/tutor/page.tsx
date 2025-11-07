@@ -2,11 +2,13 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
+import { useAuth } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Mic, MicOff, Phone, PhoneOff, BookOpen, Target, TrendingUp, Brain } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { RealtimeAgent, RealtimeSession } from "@openai/agents/realtime";
+import SignUpCTA from "@/components/auth/sign-up-cta";
 
 interface UserContext {
   reviewed: string[];
@@ -25,7 +27,18 @@ interface UserContext {
 export default function StackTutorPage() {
   const router = useRouter();
   const params = useParams();
+  const { isSignedIn } = useAuth();
   const stackId = parseInt(params.id as string);
+  
+  // Show sign-up CTA for non-authenticated users
+  if (!isSignedIn) {
+    return (
+      <SignUpCTA 
+        mode="tutor" 
+        onBack={() => router.push(`/stacks/${stackId}/${params.name}/review`)}
+      />
+    );
+  }
   
   const [isSessionActive, setIsSessionActive] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);

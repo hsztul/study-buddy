@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
+import { useAuth } from "@clerk/nextjs";
 import { MicPermissionExplainer } from "@/components/test/mic-permission-explainer";
 import { MicPermissionDenied } from "@/components/test/mic-permission-denied";
 import { TestFlashcard, Grade } from "@/components/test/test-flashcard";
@@ -10,6 +11,7 @@ import { TestProgressStrip } from "@/components/test/test-progress-strip";
 import { LandscapeSidebar } from "@/components/layout/landscape-sidebar";
 import { Spinner } from "@/components/ui/spinner";
 import { AudioRecorder } from "@/lib/audio-recorder";
+import SignUpCTA from "@/components/auth/sign-up-cta";
 
 type PermissionState = "unknown" | "prompt" | "granted" | "denied";
 type TestState = "permission" | "loading" | "testing" | "complete";
@@ -30,7 +32,18 @@ interface AttemptResult {
 export default function StackTestPage() {
   const router = useRouter();
   const params = useParams();
+  const { isSignedIn } = useAuth();
   const stackId = parseInt(params.id as string);
+  
+  // Show sign-up CTA for non-authenticated users
+  if (!isSignedIn) {
+    return (
+      <SignUpCTA 
+        mode="test" 
+        onBack={() => router.push(`/stacks/${stackId}/${params.name}/review`)}
+      />
+    );
+  }
   
   const [permissionState, setPermissionState] = useState<PermissionState>("unknown");
   const [testState, setTestState] = useState<TestState>("permission");
