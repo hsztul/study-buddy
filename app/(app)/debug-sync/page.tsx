@@ -22,7 +22,7 @@ export default function DebugSyncPage() {
       setResult(data);
     } catch (error) {
       console.error("[Debug] Sync error:", error);
-      setResult({ error: error.message });
+      setResult({ error: error instanceof Error ? error.message : String(error) });
     } finally {
       setLoading(false);
     }
