@@ -7,3 +7,4 @@ description: whenever building a web app or a next.js app use these rules
 2. Check off completed tasks in the plan.md file
 3. Use Context7 MCP to gain needed documentation
 4. Place any created documentation for this app in the docs folder (except README)
+5. When interacting with the database (migrations etc), USE neon mcp directly, do not create scripts or manual migrations

@@ -3,9 +3,10 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
-import { ArrowLeft, BookOpen, Mic, MessageSquare, BarChart3, Shield, Edit } from "lucide-react";
+import { ArrowLeft, BookOpen, Mic, MessageSquare, BarChart3, Shield, Edit, Check, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import ShareButton from "@/components/stacks/share-button";
 
@@ -15,19 +16,22 @@ interface Stack {
   isProtected: boolean;
   isOwner?: boolean;
   isPublicView?: boolean;
+  isSaved?: boolean;
 }
 
 export default function StackLayout({ children }: { children: React.ReactNode }) {
   const params = useParams();
   const pathname = usePathname();
   const router = useRouter();
-  const { isSignedIn, userId } = useAuth();
+  const { isSignedIn, userId, isLoaded } = useAuth();
+  const { toast } = useToast();
   const stackId = params.id as string;
   const stackName = params.name as string;
   const [stack, setStack] = useState<Stack | null>(null);
   const [loading, setLoading] = useState(true);
   const [isValidName, setIsValidName] = useState(false);
   const [isClient, setIsClient] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const isLoadingRef = useRef(false);
 
   useEffect(() => {
@@ -42,8 +46,58 @@ export default function StackLayout({ children }: { children: React.ReactNode })
     }
   };
 
+  const handleSaveStack = async () => {
+    if (!isSignedIn) {
+      router.push("/sign-in");
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const response = await fetch(`/api/stacks/${stackId}/save`, {
+        method: "POST",
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to save stack");
+      }
+
+      const data = await response.json();
+      
+      if (data.alreadySaved) {
+        toast({
+          title: "Already saved",
+          description: "This stack is already in your collection",
+        });
+      } else {
+        toast({
+          title: "Stack saved!",
+          description: "Added to your collection",
+        });
+        
+        // Update local state
+        setStack(prev => prev ? { ...prev, isSaved: true } : null);
+      }
+    } catch (error) {
+      console.error("Error saving stack:", error);
+      toast({
+        title: "Error",
+        description: "Failed to save stack",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const fetchStack = useCallback(async () => {
     if (isLoadingRef.current) return; // Prevent multiple fetches
+    
+    // Wait for Clerk auth to be loaded before fetching
+    if (!isLoaded) {
+      console.log("[StackLayout] Waiting for auth to load...");
+      return;
+    }
     
     try {
       isLoadingRef.current = true;
@@ -51,7 +105,29 @@ export default function StackLayout({ children }: { children: React.ReactNode })
       const response = await fetch(`/api/stacks/${stackId}`);
       if (!response.ok) throw new Error("Failed to fetch stack");
       const data = await response.json();
-      setStack(data.stack);
+      
+      // Check if this stack is already saved (if user is signed in and not the owner)
+      let isSaved = false;
+      if (isSignedIn && !data.stack.isOwner) {
+        console.log("[StackLayout] Checking if stack is saved for signed-in user...");
+        try {
+          const savedResponse = await fetch(`/api/stacks/${stackId}/is-saved`);
+          if (savedResponse.ok) {
+            const savedData = await savedResponse.json();
+            isSaved = savedData.isSaved;
+            console.log("[StackLayout] Stack saved status:", isSaved);
+          }
+        } catch (e) {
+          console.error("Error checking if stack is saved:", e);
+        }
+      } else {
+        console.log("[StackLayout] Not checking saved status:", {
+          isSignedIn,
+          isOwner: data.stack.isOwner
+        });
+      }
+      
+      setStack({ ...data.stack, isSaved });
       
       // Check if the name in URL matches the stack name (lowercase with hyphens)
       const expectedName = data.stack.name.toLowerCase().replace(/\s+/g, '-');
@@ -62,11 +138,11 @@ export default function StackLayout({ children }: { children: React.ReactNode })
       isLoadingRef.current = false;
       setLoading(false);
     }
-  }, [stackId, stackName]);
+  }, [stackId, stackName, isSignedIn, isLoaded]);
 
   useEffect(() => {
     fetchStack();
-  }, [stackId, fetchStack]); // Include fetchStack in dependencies
+  }, [fetchStack]); // fetchStack already has all dependencies
 
   const tabs = [
     { name: "Review", href: `/stacks/${stackId}/${stackName}/review`, icon: BookOpen },
@@ -137,6 +213,37 @@ export default function StackLayout({ children }: { children: React.ReactNode })
                   />
                 )}
                 
+                {/* Save Button - Show for non-owners who are signed in */}
+                {isSignedIn && !stack.isOwner && !stack.isSaved && (
+                  <Button
+                    variant="default"
+                    size="sm"
+                    onClick={handleSaveStack}
+                    disabled={isSaving}
+                    className="gap-2"
+                  >
+                    {isSaving ? (
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <Plus className="w-4 h-4" />
+                    )}
+                    Save to My Stacks
+                  </Button>
+                )}
+                
+                {/* Saved indicator */}
+                {isSignedIn && !stack.isOwner && stack.isSaved && (
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    disabled
+                    className="gap-2"
+                  >
+                    <Check className="w-4 h-4" />
+                    Saved
+                  </Button>
+                )}
+                
                 {/* Edit Button - Only show for owners and non-protected stacks */}
                 {stack.isOwner && !stack.isProtected && (
                   <Button
@@ -205,6 +312,36 @@ export default function StackLayout({ children }: { children: React.ReactNode })
                     stackTitle={stack.name}
                     stackUrl={`${window.location.origin}/stacks/${stackId}/${stack.name.toLowerCase().replace(/\s+/g, '-')}`}
                   />
+                )}
+                
+                {/* Save Button - Show for non-owners who are signed in */}
+                {isSignedIn && !stack.isOwner && !stack.isSaved && (
+                  <Button
+                    variant="default"
+                    size="sm"
+                    onClick={handleSaveStack}
+                    disabled={isSaving}
+                    className="gap-1 text-xs"
+                  >
+                    {isSaving ? (
+                      <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <Plus className="w-3 h-3" />
+                    )}
+                    Save
+                  </Button>
+                )}
+                
+                {/* Saved indicator */}
+                {isSignedIn && !stack.isOwner && stack.isSaved && (
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    disabled
+                    className="gap-1 text-xs p-2"
+                  >
+                    <Check className="w-3 h-3" />
+                  </Button>
                 )}
                 
                 {/* Edit Button - Only show for owners and non-protected stacks */}

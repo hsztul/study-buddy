@@ -105,6 +105,17 @@ export const userDailyStats = pgTable("user_daily_stats", {
   pk: primaryKey({ columns: [table.userId, table.stackId, table.day] }),
 }));
 
+// Shared stacks - tracks which stacks a user has saved from other users
+export const sharedStack = pgTable("shared_stack", {
+  userId: text("user_id").notNull().references(() => userProfile.userId, { onDelete: "cascade" }),
+  stackId: integer("stack_id").notNull().references(() => cardStack.id, { onDelete: "cascade" }),
+  savedAt: timestamp("saved_at").defaultNow().notNull(),
+}, (table) => ({
+  pk: primaryKey({ columns: [table.userId, table.stackId] }),
+  userIdIdx: index("shared_stack_user_id_idx").on(table.userId),
+  stackIdIdx: index("shared_stack_stack_id_idx").on(table.stackId),
+}));
+
 // Type exports for use in application
 export type UserProfile = typeof userProfile.$inferSelect;
 export type NewUserProfile = typeof userProfile.$inferInsert;
@@ -126,6 +137,9 @@ export type NewUserDailyStats = typeof userDailyStats.$inferInsert;
 
 export type Definition = typeof definition.$inferSelect;
 export type NewDefinition = typeof definition.$inferInsert;
+
+export type SharedStack = typeof sharedStack.$inferSelect;
+export type NewSharedStack = typeof sharedStack.$inferInsert;
 
 // Relations
 export const cardStackRelations = relations(cardStack, ({ one, many }) => ({
@@ -182,6 +196,17 @@ export const attemptRelations = relations(attempt, ({ one }) => ({
   }),
   stack: one(cardStack, {
     fields: [attempt.stackId],
+    references: [cardStack.id],
+  }),
+}));
+
+export const sharedStackRelations = relations(sharedStack, ({ one }) => ({
+  user: one(userProfile, {
+    fields: [sharedStack.userId],
+    references: [userProfile.userId],
+  }),
+  stack: one(cardStack, {
+    fields: [sharedStack.stackId],
     references: [cardStack.id],
   }),
 }));

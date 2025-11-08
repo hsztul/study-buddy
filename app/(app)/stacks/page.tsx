@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
-import { Plus, BookOpen, CheckCircle, TrendingUp, Shield, Trash2, Lock, Edit, MoreVertical } from "lucide-react";
+import { Plus, BookOpen, CheckCircle, TrendingUp, Shield, Trash2, Lock, Edit, MoreVertical, Users, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -20,6 +20,8 @@ interface Stack {
   reviewedCount: number;
   masteredCount: number;
   lastStudied: string | null;
+  isShared?: boolean;
+  ownerId?: string;
 }
 
 export default function MyStacksPage() {
@@ -37,8 +39,48 @@ export default function MyStacksPage() {
   }, [isLoaded, isSignedIn, router]);
 
   useEffect(() => {
-    fetchStacks();
-  }, []);
+    if (isSignedIn) {
+      // Check if this is a fresh sign-in by looking for the sign-in redirect
+      // Clerk adds ?from_sign_in=true to the URL after sign-in
+      const urlParams = new URLSearchParams(window.location.search);
+      const fromSignIn = urlParams.get('from_sign_in');
+      
+      console.log("[Stacks] User signed in. from_sign_in:", fromSignIn);
+      
+      // Only sync user data if this is a fresh sign-in
+      if (fromSignIn === 'true') {
+        console.log("[Stacks] Fresh sign-in detected, syncing user data...");
+        syncUser();
+        
+        // Clean up the URL parameter
+        const newUrl = window.location.pathname;
+        window.history.replaceState({}, '', newUrl);
+      } else {
+        console.log("[Stacks] Not a fresh sign-in, skipping sync");
+      }
+      fetchStacks();
+    } else {
+      console.log("[Stacks] User not signed in");
+    }
+  }, [isSignedIn]);
+
+  const syncUser = async () => {
+    try {
+      console.log("[Stacks] Starting user sync...");
+      const response = await fetch("/api/auth/sync", { method: "POST" });
+      const result = await response.json();
+      console.log("[Stacks] Sync response:", result);
+      
+      if (!response.ok) {
+        throw new Error(result.error || "Sync failed");
+      }
+      
+      console.log("[Stacks] User data synced successfully");
+    } catch (error) {
+      console.error("[Stacks] Error syncing user:", error);
+      // Don't show toast for sync errors to avoid annoying users
+    }
+  };
 
   const fetchStacks = async () => {
     try {
@@ -85,6 +127,37 @@ export default function MyStacksPage() {
       toast({
         title: "Error",
         description: error.message || "Failed to delete stack",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleRemoveSharedStack = async (stackId: number, stackName: string) => {
+    if (!confirm(`Remove "${stackName}" from your collection? This won't delete the original stack.`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/stacks/${stackId}/remove`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to remove stack");
+      }
+
+      toast({
+        title: "Success",
+        description: "Stack removed from your collection",
+      });
+
+      fetchStacks();
+    } catch (error: any) {
+      console.error("Error removing shared stack:", error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to remove stack",
         variant: "destructive",
       });
     }
@@ -163,11 +236,18 @@ export default function MyStacksPage() {
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
-                    <CardTitle className="flex items-center gap-2">
+                    <CardTitle className="flex items-center gap-2 flex-wrap">
                       {stack.name}
                       {stack.isProtected && (
-                        <Badge variant="secondary" className="text-xs" title="Locked Stack">
-                          <Lock className="w-3 h-3" />
+                        <Badge variant="secondary" className="text-xs" title="Protected Stack">
+                          <Shield className="w-3 h-3 mr-1" />
+                          Protected
+                        </Badge>
+                      )}
+                      {stack.isShared && (
+                        <Badge variant="outline" className="text-xs" title="Shared with you">
+                          <Users className="w-3 h-3 mr-1" />
+                          Shared
                         </Badge>
                       )}
                     </CardTitle>
@@ -184,26 +264,43 @@ export default function MyStacksPage() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-                        <DropdownMenuItem
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            router.push(`/stacks/${stack.id}/edit`);
-                          }}
-                          className="cursor-pointer"
-                        >
-                          <Edit className="w-4 h-4 mr-2" />
-                          Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteStack(stack.id, stack.name);
-                          }}
-                          className="cursor-pointer text-destructive focus:text-destructive"
-                        >
-                          <Trash2 className="w-4 h-4 mr-2" />
-                          Delete
-                        </DropdownMenuItem>
+                        {stack.isShared ? (
+                          // Shared stack: only show Remove option
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleRemoveSharedStack(stack.id, stack.name);
+                            }}
+                            className="cursor-pointer text-destructive focus:text-destructive"
+                          >
+                            <X className="w-4 h-4 mr-2" />
+                            Remove from Collection
+                          </DropdownMenuItem>
+                        ) : (
+                          // Owned stack: show Edit and Delete
+                          <>
+                            <DropdownMenuItem
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                router.push(`/stacks/${stack.id}/edit`);
+                              }}
+                              className="cursor-pointer"
+                            >
+                              <Edit className="w-4 h-4 mr-2" />
+                              Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteStack(stack.id, stack.name);
+                              }}
+                              className="cursor-pointer text-destructive focus:text-destructive"
+                            >
+                              <Trash2 className="w-4 h-4 mr-2" />
+                              Delete
+                            </DropdownMenuItem>
+                          </>
+                        )}
                       </DropdownMenuContent>
                     </DropdownMenu>
                   )}

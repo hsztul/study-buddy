@@ -34,7 +34,6 @@
 * **Protected SAT Vocab Stack**: Default stack with 384 SAT words (cannot be edited/deleted).
 * **Four modes per stack**: Review (flip/swipe), Test (voice, SR, grading), Tutor (AI chat), Stats (progress tracking).
 * **Custom Card Creation**: Users can create cards with front (term) and back (definition) within any custom stack.
-* Word list import for SAT vocab (JSON → Neon Postgres) + **lazy-load definitions on-demand** via `dictionaryapi.dev` (cached 7 days).
 * Simple spaced repetition (SR) per stack in **Test Mode** (see §10).
 * Auth with **Clerk** (Google; email OTP fallback optional in Phase 2).
 * Stats roll-ups per card and stack (accuracy, attempts, last seen).
@@ -61,6 +60,10 @@
 * **Limited Access for Non-Users**: Only Review mode accessible, other modes show sign-up CTAs
 * **Updated Navigation**: Non-logged in users see sign-up button instead of "My Stacks" and avatar
 * **Hidden Edit Controls**: Edit button not visible for non-logged in users
+* **Save Shared Stacks**: Logged-in users can save shared stacks to their collection
+* **Shared Stack Management**: Saved stacks are read-only, show "Shared" badge, can be removed (not deleted)
+* **Independent Progress**: Each user's progress on shared stacks is tracked separately
+* **Default Stack**: SAT Vocabulary stack (ID: 1) is automatically added to all new users as a saved shared stack
 
 ---
 
@@ -113,6 +116,10 @@
   * As a non-logged in user, I see sign-up CTAs when trying to access Test, Tutor, or Stats modes.
   * As a non-logged in user, I see a sign-up button in the header instead of "My Stacks" and avatar.
   * As a non-logged in user, I don't see edit buttons on stack pages.
+  * As a logged-in user viewing someone else's shared stack, I can save it to my collection with a "Save to My Stacks" button.
+  * As a user with saved shared stacks, I see them in my stack list with a "Shared" badge.
+  * As a user with saved shared stacks, I can remove them from my collection (without deleting the original).
+  * As a user, my progress on shared stacks is tracked separately from the owner's progress.
 
 ---
 
@@ -258,6 +265,14 @@ CREATE TABLE card_stack (
   updated_at TIMESTAMPTZ DEFAULT now()
 );
 
+-- Shared stacks (tracks saved shared stacks)
+CREATE TABLE shared_stack (
+  user_id TEXT REFERENCES user_profile(user_id) ON DELETE CASCADE,
+  stack_id INT REFERENCES card_stack(id) ON DELETE CASCADE,
+  saved_at TIMESTAMPTZ DEFAULT now() NOT NULL,
+  PRIMARY KEY (user_id, stack_id)
+);
+
 -- Cards (terms + definitions) - belongs to a stack
 CREATE TABLE card (
   id SERIAL PRIMARY KEY,
@@ -336,6 +351,8 @@ CREATE TABLE user_daily_stats (
 * `user_card(user_id, stack_id, due_on)` - for SR queries per stack
 * `attempt(user_id, stack_id, created_at desc)` - for stats per stack
 * `definition(card_id, rank)` - for cached definitions
+* `shared_stack(user_id)` - for fetching user's saved shared stacks
+* `shared_stack(stack_id)` - for checking if stack is shared
 
 ---
 
@@ -381,6 +398,19 @@ CREATE TABLE user_daily_stats (
 * `DELETE /api/my-cards/[wordId]`
 
   * Removes a card from reviewed list (only if not tested).
+
+* `POST /api/stacks/[id]/save`
+
+  * Saves a shared stack to the user's collection.
+  * Prevents saving own stacks or already-saved stacks.
+
+* `DELETE /api/stacks/[id]/remove`
+
+  * Removes a shared stack from the user's collection (doesn't delete the original stack).
+
+* `GET /api/stacks/[id]/is-saved`
+
+  * Checks if a stack is already saved to the user's collection.
 
 ---
 

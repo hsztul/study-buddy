@@ -34,6 +34,7 @@ export default function StackTestPage() {
   const params = useParams();
   const { isSignedIn } = useAuth();
   const stackId = parseInt(params.id as string);
+  const stackName = params.name as string;
   
   // Show sign-up CTA for non-authenticated users
   if (!isSignedIn) {
@@ -287,27 +288,23 @@ export default function StackTestPage() {
 
   // Render complete state
   if (testState === "complete") {
+    const hasCompletedCards = attempts.length > 0;
+    const title = hasCompletedCards ? "Session Complete!" : "No Cards to Test";
+    const description = hasCompletedCards
+      ? `You completed ${attempts.length} card${attempts.length > 1 ? "s" : ""} with ${Math.round((calculateAccuracy() || 0) * 100)}% accuracy.`
+      : "No cards available in your test stack. Add some cards from Review Mode!";
+    
     return (
       <div className="container px-4 py-8 sm:px-6">
         <div className="mx-auto max-w-2xl text-center">
-          <h1 className="text-3xl font-bold mb-4">Session Complete!</h1>
-          <p className="text-muted-foreground mb-8">
-            {attempts.length > 0
-              ? `You completed ${attempts.length} card${attempts.length > 1 ? "s" : ""} with ${Math.round((calculateAccuracy() || 0) * 100)}% accuracy.`
-              : "No cards available in your test stack. Add some cards from Review Mode!"}
-          </p>
+          <h1 className="text-3xl font-bold mb-4">{title}</h1>
+          <p className="text-muted-foreground mb-8">{description}</p>
           <div className="flex gap-4 justify-center">
             <button
-              onClick={() => router.push(`/stacks/${stackId}/review`)}
+              onClick={() => router.push(`/stacks/${stackId}/${stackName}/review`)}
               className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
             >
-              Go to Review
-            </button>
-            <button
-              onClick={() => router.push(`/stacks/${stackId}`)}
-              className="px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50"
-            >
-              Back to Stack
+              Go Back to Review
             </button>
           </div>
         </div>

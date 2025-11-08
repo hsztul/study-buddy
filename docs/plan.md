@@ -973,3 +973,42 @@ Start with section 0.1 (Project Setup & Dependencies) and work sequentially thro
 
 ---
 
+### 2.15 Shared Stacks Feature
+**Status:** ✅ Complete
+
+**Tasks:**
+- [x] Create `shared_stack` table in database schema
+- [x] Run migration to add shared_stack table
+- [x] Create API route to save shared stacks (`POST /api/stacks/[id]/save`)
+- [x] Create API route to remove shared stacks (`DELETE /api/stacks/[id]/remove`)
+- [x] Create API route to check if stack is saved (`GET /api/stacks/[id]/is-saved`)
+- [x] Update `GET /api/stacks` to include saved shared stacks
+- [x] Add "Save to My Stacks" button on stack view pages
+- [x] Add "Shared" badge to saved shared stacks in stack list
+- [x] Update dropdown menu: show "Remove" for shared stacks, "Edit/Delete" for owned stacks
+- [x] Update PRD documentation with shared stacks feature
+
+**Files Created:**
+- ✅ `app/api/stacks/[id]/save/route.ts` - Save shared stack endpoint
+- ✅ `app/api/stacks/[id]/remove/route.ts` - Remove shared stack endpoint
+- ✅ `app/api/stacks/[id]/is-saved/route.ts` - Check if saved endpoint
+
+**Files Updated:**
+- ✅ `lib/db/schema.ts` - Added `shared_stack` table and relations
+- ✅ `app/api/stacks/route.ts` - Updated to include shared stacks
+- ✅ `app/(app)/stacks/[id]/[name]/layout.tsx` - Added save button and logic
+- ✅ `app/(app)/stacks/page.tsx` - Added shared badge and remove option
+- ✅ `docs/prd.md` - Documented shared stacks feature
+
+**Notes:**
+- Shared stacks are owned by original user
+- Each user has separate progress tracking
+- Shared stacks are read-only (no edit permission)
+- Can be removed from collection without deleting original
+- Visual distinction with "Shared" badge in stack list
+- One stack can be shared with multiple users
+- Users can re-add removed stacks by visiting the link again
+- SAT Vocabulary stack (ID: 1) is automatically added to all new users
+
+---
+

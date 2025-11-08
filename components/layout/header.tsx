@@ -1,13 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { UserButton, useAuth } from "@clerk/nextjs";
+import { UserButton, useAuth, useUser } from "@clerk/nextjs";
 import { BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SignInButton, SignUpButton } from "@clerk/nextjs";
 
 export function Header() {
   const { isSignedIn } = useAuth();
+  const { user } = useUser();
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
